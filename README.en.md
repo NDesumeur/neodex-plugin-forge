@@ -1,17 +1,16 @@
 # Forge
 
-A rhythm game at the forge. Ingots slide along the rail: strike when they reach the hammer, and hold the key on long bars. Every good strike shapes the blade; at the end, the forged weapon joins your armoury. Play the 1200 tracks from the Rythme plugin, or your own music.
+A rhythm game at the forge: a weapon forged in three acts on the music, the blade, the guard then the pommel, each with its own move. Your accuracy picks the metal of each piece, from iron to star, and every new weapon joins your collection. Play the 1200 tracks from the Rythme plugin, or your own music.
 
 *Version française : [README.md](README.md)*
 
 ## How to play
 
-- **Any key** (letters, arrows, Enter) or a **click**: strike when the ingot reaches the hammer.
-- **Red bar**: a held strike. Strike at its start and hold the key until its end; let go too early and the combo breaks.
-- A **big golden ingot** falls on an accent of the music.
-- The blade takes shape strike after strike (the forged percentage is at the top right). At the end, the weapon (dagger, sword, sabre, axe, spear or hammer) is **legendary** with an S grade, then fine, sturdy, rustic or dented.
-- **Gamepad**: the D-pad, A, B, X, Y and the shoulder buttons strike (hold them for a held strike); Start starts, Select pauses.
-- **Space**: play · **P**: pause · **Full screen** during the game.
+- **Act I, the blade**: any key (or a click) when the ingot reaches the anvil; on a **red bar**, hold the key until its end to stretch the blade.
+- **Act II, the guard**: pieces come from both sides; strike on the right one (**← or D/F** for left, **→ or J/K** for right, or a click on that half of the screen).
+- **Act III, the pommel**: set the falling gems; a **double gem** takes both hands (one key on each side, almost together).
+- The **accuracy of each act** picks the metal of its piece: iron, bronze, steel, damascus, mithril or star.
+- Six weapon shapes: **36 blades to collect** (shape × blade metal). The three latest weapons rest on the rack.
 
 ## Accuracy and points
 

@@ -1,17 +1,16 @@
 # Forge
 
-Un jeu de rythme à la forge. Les lingots arrivent sur le rail : frappe quand ils touchent le marteau, et garde la touche sur les barres longues. Chaque coup réussi façonne la lame ; à la fin, l'arme forgée rejoint ton armurerie. Joue les 1200 morceaux du plugin Rythme, ou ta propre musique.
+Un jeu de rythme à la forge : une arme forgée en trois actes sur la musique, la lame, la garde puis le pommeau, chacun avec son geste. Ta précision choisit le métal de chaque pièce, du fer à l'étoile, et chaque nouvelle arme rejoint ta collection. Joue les 1200 morceaux du plugin Rythme, ou ta propre musique.
 
 *English version: [README.en.md](README.en.md)*
 
 ## Comment jouer
 
-- **N'importe quelle touche** (lettres, flèches, Entrée) ou un **clic** : frapper quand le lingot touche le marteau.
-- **Barre rouge** : un coup appuyé. Frappe à son début et garde la touche jusqu'à son bout ; lâchée trop tôt, elle casse le combo.
-- Un **gros lingot doré** tombe sur un accent de la musique.
-- La lame prend forme coup après coup (le pourcentage forgé est en haut à droite). À la fin, l'arme (dague, épée, sabre, hache, lance ou marteau) est **légendaire** avec la note S, puis fine, solide, rustique ou cabossée.
-- **Manette** : la croix, A, B, X, Y et les gâchettes hautes frappent (à tenir pour un coup appuyé) ; Start lance, Select met en pause.
-- **Espace** : jouer · **P** : pause · **Plein écran** pendant la partie.
+- **Acte I, la lame** : n'importe quelle touche (ou un clic) quand le lingot touche l'enclume ; sur une **barre rouge**, garde la touche jusqu'à son bout pour étirer la lame.
+- **Acte II, la garde** : les pièces arrivent des deux côtés ; frappe du bon (**← ou D/F** à gauche, **→ ou J/K** à droite, ou un clic sur cette moitié de l'écran).
+- **Acte III, le pommeau** : serti les gemmes qui tombent ; une **gemme double** se prend avec les deux mains (une touche de chaque côté, presque ensemble).
+- La **précision de chaque acte** choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile.
+- Six formes d'armes : **36 lames à collectionner** (forme × métal de la lame). Les trois dernières armes se posent sur le râtelier.
 
 ## Précision et points
 

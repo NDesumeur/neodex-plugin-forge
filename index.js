@@ -1,7 +1,7 @@
-// Forge : Un jeu de rythme à la forge : frappe la lame sur l'enclume quand le lingot touche le marteau, coup sec ou coup appuyé. Chaque coup réussi façonne l'arme, qui rejoint ton armurerie. Les 1200 morceaux de Rythme, ou ta propre musique.
+// Forge : Un jeu de rythme à la forge : une arme forgée en trois actes sur la musique, la lame, la garde, puis le pommeau, chacun avec son geste. Ta précision choisit le métal de chaque pièce, du fer à l'étoile, et chaque nouvelle arme rejoint ta collection. Les 1200 morceaux de Rythme, ou ta propre musique.
 // Jeu NeoDex en pixel art dessiné à la main (police bitmap, cadres et boutons en pixels). Il tourne dans le bac à sable de NeoDex.
 const HTML = `<div class="appWrap wide">
-  <div class="agHead"><span class="label">Forge</span><span class="hint">Une touche ou clic : frapper · tenir : coup appuyé · espace : jouer · P : pause</span></div>
+  <div class="agHead"><span class="label">Forge</span><span class="hint">Acte I : une touche · II : ← ou D/F, → ou J/K · III : deux mains · espace : jouer · P : pause</span></div>
   <div class="gMain"><div class="gameBox"><canvas id="gc" width="320" height="240"></canvas><button class="btn rhFs" id="rhFs">PLEIN ÉCRAN</button></div>
     <div class="gSide">
       <div class="sysCard"><b>RECORDS</b><div class="gStats" id="gStats"></div></div>
@@ -314,7 +314,7 @@ export default async function (ctx) {
   host.addStyle(CSS);
   view.innerHTML = HTML;
   pxSkin(view.querySelector('.appWrap'), { title: "FORGE", T: {"k": "#140a06", "k2": "#20120a", "fill": "#2e1a10", "fillOn": "#3e2416", "hl": "#4a2c1a", "line": "#8a4a2a", "acc": "#ff8a3a", "accL": "#ffd8b0", "accS": "#c4561a", "accD": "#4a1a06", "rivet": "#ffd8b0", "btn": "#4a2c1a", "btnHi": "#c07a4a", "btnLo": "#20120a", "btnHov": "#5a3420", "btnHovHi": "#e09a6a", "text": "#fff2e8", "muted": "#e0c0a8", "acc2": "#ffd8c8", "gold": "#ff8a3a", "orange": "#ffa030", "red": "#ff4a5a", "green": "#7ee07a", "green2": "#2f8a3a", "bg": "#1a0c06", "bgDot": "#2e1a10", "bgDot2": "#20120a", "spark": "#8a4a2a", "spark2": "#ffd8c8", "tile": ["................", "...:............", "................", "..........+.....", "................", "................", ".....:..........", "................", "................", ".............:..", "................", "..+.............", "................", ".........:......", "................", "................"]},
-  emblem: ["............","..kkkk......","..kmmk......","..kmmkkkkkk.","..kmmkoooook","..kkkk.kkkk.","............",".kkkkkkkkkk.","..kmmmmmmk..","....kmmk....","...kkmmkk...","..kmmmmmmk.."],
+  emblem: ["..........kk",".........kmk","........kmk.",".......kmk..","......kmk...",".....kmk....",".k..kmk.....","..kkmk......","...ok.......","..kook......",".ko..k......","kk.........."],
   icons: [[/^PLEIN/, "full"], [/^IMPORTER/, "folder"], [/^CRÉER/, "plus"], [/^CHANSONS/, "note"], [/^MES MUSIQUES/, "folder"], [/^NOUVELLE/, "play"], [/^RECORDS/, "crown"]] });
   const $ = id => view.querySelector('#' + id) || document.getElementById(id);
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };
@@ -1069,134 +1069,245 @@ function rhOpen() {
   const last = games.rhythmLast || {song: 0, diff: 'normal'}; rhSelect(last.song, last.diff).catch(() => rhSelect(0, 'normal'));
 }
 
-/* ---------- Forge : une lame rougeoie sur l'enclume. Les coups arrivent sur le rail depuis la droite : un coup sec (une touche ou un clic) quand
-   le lingot touche le marteau, un coup appuyé (tenir jusqu'au bout de la barre) sur les notes longues. Chaque coup réussi façonne la lame ;
-   à la fin, l'arme forgée rejoint l'armurerie, avec la note de la partie. ---------- */
-const FG = {AX: 92, AY: 150, V: 110, MIN: .25};  // AX, AY : le point de frappe ; V : la vitesse du rail (pixels par seconde) ; MIN : écart minimum entre deux coups, en temps
+/* ---------- Forge : une arme forgée en trois actes, sur la musique. Acte I, la lame : martèle les lingots qui arrivent sur l'enclume (et étire
+   la lame sur les notes longues). Acte II, la garde : les pièces arrivent des deux côtés, frappe du bon côté (gauche ou droite). Acte III, le
+   pommeau : serti les gemmes qui tombent, les doubles avec les deux mains. La précision de chaque acte choisit le métal de sa pièce, du fer à
+   l'étoile ; chaque arme rejoint l'armurerie, et une nouvelle (forme × métal de la lame) s'ajoute à la collection. ---------- */
+const FG = {AX: 160, AY: 146, V: 110, MIN: .25};  // AX, AY : le point de frappe, sur l'enclume ; V : la vitesse des pièces (pixels par seconde) ; MIN : écart minimum, en temps
 const FG_KINDS = ['Dague', 'Épée', 'Sabre', 'Hache', 'Lance', 'Marteau'];
-const FG_GRADE = {S: ['#fff4b0', '#ffd84a', 'Légendaire'], A: ['#d8f0ff', '#8ac8ff', 'Fine'], B: ['#e8e8f0', '#a8a8c0', 'Solide'], C: ['#d8c8a8', '#a08060', 'Rustique'], D: ['#a89888', '#6a5a4a', 'Cabossée']};
+const FG_ACTS = [['ACTE I · LA LAME', 'Martèle les lingots · tiens les barres pour étirer'], ['ACTE II · LA GARDE', 'Frappe du bon côté : ← ou D/F, → ou J/K'], ['ACTE III · LE POMMEAU', 'Serti les gemmes · les doubles à deux mains']];
+// les métaux, de la précision la plus basse à la plus haute : [nom, précision minimum, clair, moyen, sombre]
+const FG_METALS = [['fer', 0, '#c8c0b8', '#7a726a', '#3e3834'], ['bronze', .6, '#ffd098', '#c8823a', '#6a3a14'], ['acier', .75, '#f0f6ff', '#a8b4c4', '#4a5464'],
+  ['damas', .87, '#e8e8f8', '#8a8aa8', '#3a3a54'], ['mithril', .94, '#f0ffff', '#8ae0f0', '#2a7a98'], ['étoile', .98, '#fffae0', '#d8b0ff', '#6a3ab8']];
+const FG_HOT = ['#fff4b0', '#ffb84a', '#c8461a'];
+const FG_L = new Set([...'qwertasdfgzxcvb', 'ArrowLeft']), FG_R = new Set([...'yuiophjklmn', 'ArrowRight']);
+const fgSide = k => FG_L.has(k) ? -1 : FG_R.has(k) ? 1 : 0;
+const fgMetal = acc => FG_METALS.filter(m => acc >= m[1] - 1e-9).at(-1);
+const fgName = (kind, m) => `${kind} ${/^[aeiouéè]/i.test(m[0]) ? 'd\'' : 'de '}${m[0]}`;
 const RHG = {key: 'forge', factor: 1.05, color: '#ff8a3a',
-  help: [['Une touche ou un clic quand le lingot touche le marteau', '#ffd8b0'], ['Barre longue : garde la touche jusqu\'au bout', '#e8e0ff'], ['Chaque coup réussi façonne la lame', '#e8e0ff']],
-  // les notes ensemble n'en font qu'une ; trop rapprochées (moins d'un quart de temps) : retirées ; une note tenue devient un coup appuyé
+  help: [['Trois actes : la lame, la garde, le pommeau', '#ffd8b0'], ['Chaque acte a son geste, affiché à son début', '#e8e0ff'], ['La précision choisit le métal : du fer à l\'étoile', '#e8e0ff']],
+  // les notes ensemble n'en font qu'une ; trop rapprochées : retirées. Le morceau est coupé en trois actes (par tiers de notes), avec un temps
+  // de pause avant chaque nouvel acte. La garde : un côté par note (graves à gauche, aigus à droite, jamais plus de 4 fois le même) ;
+  // le pommeau : les accents deviennent des gemmes doubles. Les notes longues (lame, pommeau) se tiennent
   chart(base, c) {
-    const beat = (c.step || .125) * 4, out = [];
-    for (const n of base) {
-      const p = out.at(-1); if (p && n.t - p.t < FG.MIN * beat - 1e-6) continue;
-      if (p?.len && n.t < p.t + p.len + beat * .25) p.len = Math.max(0, n.t - p.t - beat * .25);  // un coup appuyé finit avant le coup suivant
-      out.push({t: n.t, len: (n.len || 0) >= beat * .9 ? n.len : 0, acc: n.acc || 0});
-    }
-    out.forEach(n => { if (n.len < (c.step || .125) * 3) n.len = 0; });
+    const beat = (c.step || .125) * 4; let out = [];
+    for (const n of base) { const p = out.at(-1); if (p && n.t - p.t < FG.MIN * beat - 1e-6) continue; out.push({t: n.t, len: (n.len || 0) >= beat * .9 ? n.len : 0, acc: n.acc ?? (out.length % 4 ? 0 : 1), lane: n.lane ?? 0}); }
+    if (out.length < 6) return out.map(n => ({...n, act: 0, len: 0}));
+    const t1 = out[Math.floor(out.length / 3)].t, t2 = out[Math.floor(out.length * 2 / 3)].t;
+    out = out.filter(n => !(n.t < t1 && n.t >= t1 - beat * 1.5) && !(n.t < t2 && n.t >= t2 - beat * 1.5));  // une respiration avant chaque acte
+    let run = 0, last = 0;
+    out.forEach((n, i) => {
+      n.act = n.t < t1 ? 0 : n.t < t2 ? 1 : 2;
+      const next = out[i + 1]; if (n.len && next) n.len = Math.max(0, Math.min(n.len, next.t - n.t - beat * .25)); if (n.len < beat * .75 || n.act === 1) n.len = 0;
+      if (n.act === 1) { let s = n.lane < 2 ? -1 : 1; run = s === last ? run + 1 : 1; if (run > 4) { s = -s; run = 1; } n.side = last = s; }
+      if (n.act === 2) n.both = !n.len && n.acc > .7 && (!i || n.t - out[i - 1].t >= beat * .5);
+      delete n.lane;
+    });
     return out;
   },
-  reset() { Object.assign(rh, {judge: null, tap: -99, held: null, heat: 0, shaped: 0, kind: FG_KINDS[(rh.info.key.length * 7 + Math.round(rh.c.len)) % FG_KINDS.length], saved: false}); },
-  update() {
-    const now = rhNow();
-    for (const n of rh.notes) { if (n.judged) continue; if (n.t - now > .2) break; if (now - n.t > RH.WIN.at(-1)[0]) { rhMissed(n); fgFx(null); } }
-    if (rh.held && now >= rh.held.t + rh.held.len) { rh.held.tail = true; rh.score += 150; rh.shaped++; rh.held = null; fgFx([0, 'TENU', 0, '#ffd84a'], true); }
-    for (const s of rh.sparks) { s.x += s.vx; s.y += s.vy; s.vy += .12; s.life--; } rh.sparks = rh.sparks.filter(s => s.life > 0);
-    rh.heat = Math.max(0, rh.heat - .01);
-    if (rh.judge && --rh.judge.t <= 0) rh.judge = null;
-    if (rhCheckEnd(now) && !rh.saved) fgSave();
+  reset() {
+    Object.assign(rh, {judge: null, tap: -99, tapSide: 0, held: null, heat: 0, embers: [], banner: null, acts: [0, 1, 2].map(() => ({sum: 0, n: 0})), parts: [null, null, null], act: 0, wx: null,
+      kind: FG_KINDS[(rh.info.key.length * 7 + Math.round(rh.c.len)) % FG_KINDS.length], saved: false, isNew: false});
+    rh.banner = {lines: [[FG_ACTS[0][0], '#ffd84a'], [FG_ACTS[0][1], '#ffd8b0']], t: 200};  // le premier acte s'annonce pendant le compte à rebours
   },
+  update() { fgStep(rhNow()); },
   draw() { fgDraw(); },
 };
-function fgFx(w, quiet) {
-  rh.judge = {text: w ? w[1] : 'RATÉ', col: w ? w[3] : '#ff6a5a', t: 24};
+function fgScore(a, v) { rh.acts[a].sum += v; rh.acts[a].n++; }
+function fgFx(n, w, text) {
+  rh.judge = {text: w ? w[1] : text || 'RATÉ', col: w ? w[3] : '#ff6a5a', t: 24}; fgScore(n.act, w ? w[2] / RH.WIN[0][2] : 0);
   if (!w) return;
-  if (!quiet) rh.heat = Math.min(1, rh.heat + .25);
-  for (let i = 0; i < (quiet ? 6 : 14); i++) { const a = -Math.PI / 2 + (Math.random() - .5) * 2.6, v = 1 + Math.random() * 2.4; rh.sparks.push({x: FG.AX, y: FG.AY - 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 22 + Math.random() * 10 | 0, col: Math.random() < .5 ? '#ffd84a' : '#ff8a3a'}); }
+  rh.heat = Math.min(1, rh.heat + .22);
+  for (let i = 0; i < 14; i++) { const a = -Math.PI / 2 + (Math.random() - .5) * 2.6, v = 1 + Math.random() * 2.4; rh.sparks.push({x: FG.AX + (n.both ? (i % 2 ? 8 : -8) : 0), y: FG.AY - 4, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 22 + Math.random() * 10 | 0, col: Math.random() < .5 ? '#ffd84a' : '#ff8a3a'}); }
 }
-function fgHit(by, now = rhNow()) {  // by : la touche (ou le bouton de souris) qui frappe ; elle seule finit un coup appuyé
-  rh.tap = rh.tick; rhPlayKit(2, .35);
-  let near = null;
-  for (const n of rh.notes) { if (n.judged) continue; if (n.t - now > .2) break; if (Math.abs(n.t - now) <= RH.WIN.at(-1)[0] && (!near || Math.abs(n.t - now) < Math.abs(near.t - now))) near = n; }
-  if (!near) return;
-  const w = rhHit(near, now - near.t); fgFx(w);
-  if (w) { rh.shaped++; if (near.len) { rh.held = near; rh.heldBy = by; } }
-}
-function fgRelease(by, now = rhNow()) {  // lâcher la touche : un coup appuyé lâché trop tôt casse le combo
-  const n = rh.held; if (!n || by !== rh.heldBy) return; rh.held = null;
-  if (now < n.t + n.len - .12) { n.broken = true; rh.combo = 0; rh.judge = {text: 'LÂCHÉ', col: '#ff6a5a', t: 26}; }
-  else { n.tail = true; rh.score += 150; rh.shaped++; }
-}
-function fgSave() {  // l'arme forgée rejoint l'armurerie (les 60 dernières)
-  rh.saved = true; const list = gstore('forgeArmory', []);
-  list.unshift({name: rh.info.name.slice(0, 40), kind: rh.kind, grade: rh.grade, at: Date.now()}); list.length = Math.min(list.length, 60); saveGames();
-}
-// la lame, de la barre brute à l'arme finie : f (0 à 1) = la part du travail faite ; une couleur par note à la fin
-function fgBlade(x, y, f, kind, cols, s = 1) {
-  const [hi, mid] = cols, L = Math.round((26 + 26 * f) * s), sh = f > .5, P = (dx, dy, w, h, c) => px(g, c, x + dx * s, y + dy * s, w * s, h * s);
-  P(-14, -2, 10, 4, '#5a3a1a'); P(-16, -3, 3, 6, '#8a6a3a'); P(-4, -5, 3, 10, '#a08060');  // la poignée et la garde
-  const len = L / s;
-  if (kind === 'Hache' && sh) { P(0, -1, len, 2, '#6a4a2a'); P(len - 12, -9, 9, 14, mid); P(len - 11, -8, 3, 12, hi); return; }
-  if (kind === 'Marteau' && sh) { P(0, -1, len, 2, '#6a4a2a'); P(len - 10, -7, 10, 14, mid); P(len - 9, -6, 2, 12, hi); return; }
-  if (kind === 'Lance' && sh) { P(0, -1, len, 2, '#6a4a2a'); for (let i = 0; i < 9; i++) P(len + i, -4 + i / 2, 1, 8 - i, i < 4 ? hi : mid); return; }
-  const w = sh ? (kind === 'Dague' ? 3 : kind === 'Sabre' ? 5 : 4) : 6;
-  P(-1, -w / 2, len, w, mid); P(-1, -w / 2, len, 1, hi);
-  if (sh) for (let i = 0; i < 5; i++) P(len - 1 + i, -w / 2 + (kind === 'Sabre' ? 0 : i * w / 10), 1, Math.max(1, w - i * w / 5), mid);  // la pointe
-}
-const FG_BG = cnv(W, H, b => {
-  for (let y = 0; y < H; y++) { const k = y / H; px(b, k < .6 ? (y % 2 ? '#1a0e0a' : '#1e100a') : '#120a08', 0, y, W, 1); }
-  for (let y = 8; y < 140; y += 14) for (let x = (y / 14 % 2) * 12; x < W; x += 24) { px(b, '#2a1810', x, y, 22, 12); px(b, '#341e12', x, y, 22, 1); }  // le mur de pierre
-  for (let y = 160; y < H; y += 2) px(b, '#0e0806', 0, y, W, 1);
-  px(b, '#3a2a20', 0, 158, W, 2);
-});
-function fgDraw() {
-  const now = rhNow(), heat = rh.heat + (rh.combo > 20 ? .2 : 0);
-  g.drawImage(FG_BG, 0, 0);
-  // la forge à gauche : le feu respire avec la musique
-  const fl = .6 + .4 * Math.sin(rh.tick / 5) * Math.sin(rh.tick / 13);
-  for (let i = 0; i < 26; i++) { const r = 34 - i, a = (1 - i / 26) * .07 * (1 + heat); g.fillStyle = `rgba(255,${120 + i * 4},40,${a})`; g.beginPath(); g.arc(18, 132, r * (1.4 + fl * .3), 0, Math.PI * 2); g.fill(); }
-  px(g, '#2a1a12', 0, 108, 40, 50); px(g, '#ff8a3a', 6, 128 - fl * 4, 26, 18 + fl * 4); px(g, '#ffd84a', 12, 134 - fl * 3, 14, 10 + fl * 3); px(g, '#4a2a1a', 0, 104, 42, 6);
-  // le rail : les lingots arrivent de la droite vers le marteau
-  px(g, '#3a2418', FG.AX, FG.AY + 6, W - FG.AX, 3); px(g, '#5a3a24', FG.AX, FG.AY + 6, W - FG.AX, 1);
-  for (let k = 0; k < 12; k++) { const x = FG.AX + ((k * 24 - (now * FG.V) % 24) + 288) % 288; px(g, '#24160e', x, FG.AY + 9, 3, 2); }
-  for (let i = rh.notes.length - 1; i >= 0; i--) {
-    const n = rh.notes[i]; if (n.judged && !(n === rh.held)) continue;
-    const x0 = FG.AX + (n.t - now) * FG.V; if (x0 > W + 10) continue;
-    if (n.len) {  // un coup appuyé : une barre chauffée au rouge, à tenir jusqu'à son bout
-      const x1 = FG.AX + (n.t + n.len - now) * FG.V, a = Math.max(FG.AX, n === rh.held ? FG.AX : x0); if (x1 < FG.AX) continue;
-      px(g, '#6a1a0a', a, FG.AY - 3, x1 - a, 8); px(g, n === rh.held ? '#ffd84a' : '#ff5a2a', a, FG.AY - 2, x1 - a, 5); px(g, '#ffb84a', a, FG.AY - 2, x1 - a, 1); px(g, '#ffd84a', x1 - 2, FG.AY - 4, 4, 10);
-    }
-    if (n.judged) continue;
-    const big = n.acc > .85, r = big ? 7 : 5;  // un lingot (plus gros sur un accent de la musique)
-    px(g, '#3a0a04', x0 - r - 1, FG.AY - r, 2 * r + 2, 2 * r + 1); px(g, big ? '#ffd84a' : '#ff8a3a', x0 - r, FG.AY - r + 1, 2 * r, 2 * r - 1); px(g, '#fff4b0', x0 - r + 1, FG.AY - r + 2, r, 2);
+function fgStep(now) {
+  const late = RH.WIN.at(-1)[0];
+  for (const n of rh.notes) {
+    if (n.judged) continue; if (n.t - now > .25) break;
+    if (n.first) { if (now - n.first.at > .12) { rhMissed(n); fgFx(n, null, 'À MOITIÉ'); } continue; }  // une gemme double : la deuxième main n'est pas venue
+    if (now - n.t > late) { rhMissed(n); fgFx(n, null); }
   }
-  // l'enclume, la lame dessus (elle prend forme coup après coup), le marteau qui frappe
-  px(g, '#1a1a22', FG.AX - 30, FG.AY + 4, 60, 8); px(g, '#2e2e3a', FG.AX - 34, FG.AY - 2, 68, 7); px(g, '#4a4a5a', FG.AX - 34, FG.AY - 2, 68, 1); px(g, '#22222c', FG.AX - 12, FG.AY + 12, 24, 14); px(g, '#2e2e3a', FG.AX - 22, FG.AY + 26, 44, 6);
-  const total = rh.notes.length + rh.notes.filter(n => n.len).length || 1, f = Math.min(1, rh.shaped / total), done = rh.mode === 'over';
-  const hot = done ? FG_GRADE[rh.grade] || FG_GRADE.D : [heat > .5 ? '#fff4b0' : '#ffd84a', heat > .5 ? '#ffb84a' : '#ff6a2a'];
-  if (!done) fgBlade(FG.AX - 18, FG.AY - 6, f, rh.kind, hot);
-  const swing = rh.tick - rh.tap < 5 ? 0 : Math.min(1, (rh.tick - rh.tap - 5) / 8), ang = -Math.PI / 4 + swing * 1.1, hx = FG.AX + 28, hy = FG.AY - 42;  // en bas : la tête du marteau sur la lame
-  g.save(); g.translate(hx, hy); g.rotate(ang); px(g, '#6a4a2a', -36, -2, 36, 4); px(g, '#3a3a48', -46, -8, 14, 16); px(g, '#5a5a6a', -46, -8, 14, 2); g.restore();
+  if (rh.held && now >= rh.held.t + rh.held.len) { rh.held.tail = true; rh.score += 150; fgScore(rh.held.act, 1); rh.held = null; rh.judge = {text: 'TENU', col: '#ffd84a', t: 20}; }
+  // la fin d'un acte : sa pièce refroidit dans son métal ; l'acte suivant s'annonce
+  for (let a = 0; a < 3; a++) {
+    if (rh.parts[a] || !rh.notes.some(n => n.act === a) || rh.notes.some(n => n.act === a && (!n.judged || n === rh.held))) continue;
+    const s = rh.acts[a]; rh.parts[a] = fgMetal(s.n ? s.sum / s.n : 0);
+    rh.banner = {lines: [[['LAME', 'GARDE', 'POMMEAU'][a] + ' : ' + rh.parts[a][0].toUpperCase(), rh.parts[a][3]], [Math.round((s.n ? s.sum / s.n : 0) * 100) + ' % de précision', '#e8e0ff']], t: 70};
+    for (let i = 0; i < 20; i++) { const b = Math.random() * 6.28, v = .5 + Math.random() * 1.5; rh.sparks.push({x: FG.AX, y: FG.AY - 6, vx: Math.cos(b) * v, vy: Math.sin(b) * v - 1, life: 26, col: rh.parts[a][2]}); }
+  }
+  const act = rh.notes.find(n => !n.judged)?.act ?? 2;
+  if (act !== rh.act) { rh.act = act; if (!rh.banner || rh.banner.t < 30) rh.banner = {lines: [[FG_ACTS[act][0], '#ffd84a'], [FG_ACTS[act][1], '#ffd8b0']], t: 110}; }
+  if (rh.banner && --rh.banner.t <= 0) rh.banner = null;
+  for (const s of rh.sparks) { s.x += s.vx; s.y += s.vy; s.vy += .12; s.life--; } rh.sparks = rh.sparks.filter(s => s.life > 0);
+  if (rh.tick % 4 === 0) rh.embers.push({x: 18 + Math.random() * 40, y: 100, vx: (Math.random() - .3) * .4, life: 60 + Math.random() * 40 | 0});
+  for (const e of rh.embers) { e.x += e.vx + Math.sin((e.life + e.x) / 9) * .2; e.y -= .5; e.life--; } rh.embers = rh.embers.filter(e => e.life > 0);
+  rh.heat = Math.max(0, rh.heat - .01);
+  if (rh.judge && --rh.judge.t <= 0) rh.judge = null;
+  if (rhCheckEnd(now) && !rh.saved) fgSave();
+}
+function fgHit(by, side, now = rhNow()) {  // by : la touche (ou le bouton de souris) qui frappe ; elle seule finit une note tenue. side : -1 gauche, 1 droite, 0 l'une ou l'autre
+  rh.tap = rh.tick; rh.tapSide = side; rhPlayKit(2, .35);
+  let near = null;
+  for (const n of rh.notes) { if (n.judged) continue; if (n.t - now > .25) break; if (Math.abs(n.t - now) <= RH.WIN.at(-1)[0] && (!near || Math.abs(n.t - now) < Math.abs(near.t - now))) near = n; }
+  if (!near) return;
+  if (near.act === 1 && side !== near.side) { rhMissed(near); fgFx(near, null, 'MAUVAIS CÔTÉ'); return; }
+  if (near.both) {  // une gemme double : les deux mains (un côté puis l'autre) en moins de 120 ms ; jugée sur la première
+    if (!near.first) { near.first = {side, at: now, dt: now - near.t}; return; }
+    if (side && near.first.side && side === near.first.side) return;
+    const w = rhHit(near, near.first.dt); fgFx(near, w); return;
+  }
+  const w = rhHit(near, now - near.t); fgFx(near, w);
+  if (w && near.len) { rh.held = near; rh.heldBy = by; }
+}
+function fgRelease(by, now = rhNow()) {  // lâcher la touche : une note tenue lâchée trop tôt casse le combo
+  const n = rh.held; if (!n || by !== rh.heldBy) return; rh.held = null;
+  if (now < n.t + n.len - .12) { n.broken = true; rh.combo = 0; fgScore(n.act, 0); rh.judge = {text: 'LÂCHÉ', col: '#ff6a5a', t: 26}; }
+  else { n.tail = true; rh.score += 150; fgScore(n.act, 1); }
+}
+function fgSave() {  // l'arme rejoint l'armurerie (les 60 dernières) ; la forme et le métal de la lame : une case de la collection
+  rh.saved = true; rh.parts = rh.parts.map(p => p || FG_METALS[0]);
+  const list = gstore('forgeArmory', []), col = gstore('forgeCollection', {}), key = rh.kind + '|' + rh.parts[0][0];
+  list.unshift({name: rh.info.name.slice(0, 40), kind: rh.kind, metals: rh.parts.map(p => p[0]), grade: rh.grade, at: Date.now()}); list.length = Math.min(list.length, 60);
+  rh.isNew = !col[key]; col[key] = {song: rh.info.name.slice(0, 40), at: col[key]?.at || Date.now()}; saveGames();
+}
+// l'arme, couchée, la pointe à droite ; (x, y) : le centre de la garde. P : {blade, guard, pommel} (couleurs [clair, moyen, sombre] ou rien), f : la lame faite (0 à 1)
+const FG_SHAPE = {Dague: {L: 34, w: 6, G: 10, gh: 12}, Épée: {L: 58, w: 6, G: 14, gh: 18}, Sabre: {L: 54, w: 7, G: 13, gh: 15}, Hache: {L: 56, G: 12, gh: 8, haft: 1}, Lance: {L: 64, G: 12, gh: 8, haft: 1}, Marteau: {L: 50, G: 12, gh: 8, haft: 1}};
+function fgWeapon(x, y, s, kind, P, f = 1) {
+  const S = FG_SHAPE[kind], R = (dx, dy, w, h, c) => px(g, c, Math.round(x + dx * s), Math.round(y + dy * s), Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s)));
+  const WOOD = ['#c8945a', '#8a5a30', '#4a2a14'];
+  if (P.pommel) {  // la poignée et le pommeau
+    for (let i = 0; i < S.G; i++) { R(-3 - i, -2, 1, 4, i % 3 ? '#5a3a1a' : '#3a2410'); R(-3 - i, -2, 1, 1, '#7a5230'); }
+    const [hi, mid, dk] = P.pommel, cx = -3 - S.G - 3;
+    if (S.haft) { R(cx - 1, -3, 4, 7, dk); R(cx, -3, 3, 6, mid); R(cx, -3, 3, 1, hi); }
+    else for (let j = -4; j <= 4; j++) for (let i = -4; i <= 4; i++) { const d = Math.hypot(i, j); if (d <= 4.2) R(cx + i, j, 1, 1, d > 3.3 ? dk : i + j < -2 ? hi : mid); }
+  }
+  if (P.blade) {
+    const [hi, mid, dk] = P.blade, L = Math.max(6, Math.round(S.L * (.3 + .7 * f)));
+    if (S.haft) {  // un manche de bois et une tête de métal au bout
+      for (let i = 3; i < L; i++) { R(i, -2, 1, 4, WOOD[1]); R(i, -2, 1, 1, WOOD[0]); R(i, 1, 1, 1, WOOD[2]); }
+      if (f > .25) {
+        if (kind === 'Hache') { for (let i = 0; i < 12; i++) { const h = 6 + Math.round(Math.sin(i / 11 * Math.PI / 2) * 8); R(L - 12 + i, -h, 1, h + 3, mid); R(L - 12 + i, -h, 1, 1, hi); R(L - 12 + i, 2, 1, 1, dk); } R(L - 1, -14, 1, 17, hi); }
+        else if (kind === 'Lance') { for (let i = 0; i < 18; i++) { const h = Math.round(Math.sin(i / 17 * Math.PI) * 4 * (i < 9 ? 1 : (18 - i) / 9) + 1); R(L + i, -h, 1, 2 * h, mid); R(L + i, -h, 1, 1, hi); R(L + i, h - 1, 1, 1, dk); } }
+        else { R(L - 14, -8, 14, 16, dk); R(L - 13, -7, 12, 14, mid); R(L - 13, -7, 12, 2, hi); R(L - 13, 5, 12, 2, dk); }
+      }
+    } else for (let i = 0; i < L; i++) {  // une lame : bord clair en haut, sombre en bas, la gorge au milieu, la pointe effilée
+      const tipLen = kind === 'Dague' ? 10 : 8, k = Math.max(0, i - (L - tipLen)) / tipLen, w = Math.max(1, Math.round(S.w * (1 - k * .9))), off = kind === 'Sabre' ? -Math.round((i / S.L) ** 2 * 7) : 0, top = 3 + i, y0 = -Math.floor(w / 2) + off + (kind === 'Sabre' ? Math.round(k * w / 2) : 0);
+      for (let j = 0; j < w; j++) R(top, y0 + j, 1, 1, j === 0 ? hi : j === w - 1 ? dk : P.blade === FG_HOT ? mid : (P.blade[0] === FG_METALS[3][2] && (i + j * 3) % 7 < 2) ? hi : mid);
+      if (w >= 5 && k === 0 && kind !== 'Sabre') R(top, y0 + Math.floor(w / 2), 1, 1, dk);
+    }
+  }
+  if (P.guard) { const [hi, mid, dk] = P.guard, h = S.gh; R(-2, -h / 2 - 1, 5, h + 2, dk); R(-1, -h / 2, 3, h, mid); R(-1, -h / 2, 1, h, hi); if (!S.haft) { R(-2, -h / 2 - 2, 5, 2, mid); R(-2, h / 2, 5, 2, mid); } }
+}
+const fgSpan = kind => { const S = FG_SHAPE[kind]; return [-3 - S.G - 8, 3 + S.L + (kind === 'Lance' ? 18 : 0)]; };  // de bout en bout, autour de la garde
+// le décor : un mur de briques éclairé par le four, la hotte et le four à gauche, des outils, un râtelier, un tonneau, le sol, l'enclume
+const FG_BG = cnv(W, H, b => {
+  const r = seeded(41), lit = (x, y) => Math.max(0, 1 - Math.hypot(x - 36, (y - 120) * 1.2) / 230);
+  const mix = (a, c, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(c.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  px(b, '#0c0605', 0, 0, W, H);
+  for (let row = 0; row * 10 < 150; row++) for (let x = (row % 2) * -10; x < W; x += 20) { const y = row * 10, t = Math.min(1, lit(x + 10, y + 5) * 1.3 + (r() - .5) * .12);
+    px(b, mix('#1a0e0a', '#5a3220', t), x + 1, y + 1, 18, 8); px(b, mix('#24140e', '#7a4a2e', t), x + 1, y + 1, 18, 1); px(b, mix('#120806', '#2e1a10', t), x + 1, y + 8, 18, 1); }
+  // le sol : des dalles, plus serrées vers le fond
+  for (let y = 150, h = 6; y < H; y += h, h += 3) for (let x = 0; x < W; x += 28) { const t = lit(x + 14, y) * .6; px(b, mix('#140c08', '#3a2416', t), x + 1, y + 1, 26, h - 1); px(b, mix('#1c120c', '#4a2e1c', t), x + 1, y + 1, 26, 1); }
+  px(b, '#080404', 0, 149, W, 2);
+  // la hotte et le four
+  for (let y = 0; y < 72; y++) { const w = 60 + Math.round(y * .3); px(b, y % 10 ? '#1e120c' : '#140a06', 4 + 30 - w / 2 + 6, y, w, 1); }
+  px(b, '#2a1a12', 0, 70, 76, 8); px(b, '#3e2818', 0, 70, 76, 1);
+  for (let y = 78; y < 150; y += 8) for (let x = (y / 8 % 2) * 6; x < 76; x += 12) px(b, (x + y) % 3 ? '#3a2a22' : '#2e2018', x, y, 11, 7);
+  for (let y = 90; y < 148; y++) for (let x = 12; x < 64; x++) { const dx = (x - 38) / 26, dy = (y - 148) / 58; if (dx * dx + dy * dy < 1) px(b, '#120604', x, y); }  // la bouche du four
+  // les outils accrochés : des tenailles, deux marteaux
+  for (let y = 18; y < 70; y++) { px(b, '#26262e', 96 + Math.round((y - 18) * .1), y, 2, 1); px(b, '#26262e', 102 - Math.round((y - 18) * .1), y, 2, 1); }
+  px(b, '#3a3a44', 94, 14, 12, 4); px(b, '#5a4030', 116, 24, 3, 40); px(b, '#3a3a46', 111, 20, 13, 8); px(b, '#5a5a66', 111, 20, 13, 1); px(b, '#5a4030', 132, 30, 3, 32); px(b, '#3a3a46', 128, 26, 11, 7);
+  // le râtelier à droite (les dernières armes s'y posent, dessinées à part) et le tonneau d'eau
+  px(b, '#3a2412', 232, 28, 82, 6); px(b, '#5a3a1e', 232, 28, 82, 1); px(b, '#3a2412', 232, 96, 82, 6); px(b, '#5a3a1e', 232, 96, 82, 1);
+  for (const x of [236, 308]) px(b, '#2a1a0c', x, 28, 3, 74);
+  px(b, '#3a2412', 262, 152, 38, 34); for (const y of [156, 170, 182]) px(b, '#22222a', 260, y, 42, 2); px(b, '#5a3a1e', 264, 152, 2, 34); px(b, '#1a3a5a', 263, 150, 36, 3); px(b, '#4a7aa8', 266, 150, 10, 1);
+  // l'enclume : la bigorne à gauche, la table, la taille, le pied
+  const X = FG.AX, Y = FG.AY + 4;
+  for (let i = 0; i < 28; i++) { const h = Math.max(1, Math.round(6 * i / 28)); px(b, '#3e3e4c', X - 62 + i, Y + 3 - h / 2, 1, h); px(b, '#6a6a7a', X - 62 + i, Y + 3 - h / 2, 1, 1); }
+  px(b, '#16161e', X - 35, Y - 1, 68, 9); px(b, '#3e3e4c', X - 34, Y, 66, 7); px(b, '#7a7a8a', X - 34, Y, 66, 1); px(b, '#5a5a6a', X - 34, Y + 1, 66, 1); px(b, '#2a2a36', X - 34, Y + 6, 66, 1);
+  px(b, '#16161e', X - 15, Y + 7, 30, 16); px(b, '#2e2e3a', X - 14, Y + 7, 28, 15); px(b, '#3e3e4c', X - 14, Y + 7, 4, 15);
+  px(b, '#16161e', X - 27, Y + 22, 54, 10); px(b, '#2e2e3a', X - 26, Y + 22, 52, 9); px(b, '#4a4a5a', X - 26, Y + 22, 52, 1);
+  px(b, '#3a2412', X - 32, Y + 32, 64, 6); px(b, '#5a3a1e', X - 32, Y + 32, 64, 1);  // le billot
+});
+const FG_GEMS = ['#ff4a6a', '#4a8aff', '#4ae08a', '#ffd84a'];
+function fgGem(x, y, col) { for (let j = -4; j <= 4; j++) { const w = 4 - Math.abs(j); px(g, '#120a10', x - w - 1, y + j, 2 * w + 3, 1); px(g, j < 0 ? '#ffffff' : col, x - w, y + j, 2 * w + 1, 1); } px(g, col, x - 2, y - 2, 5, 2); }
+function fgDraw() {
+  const now = rhNow(), heat = rh.heat + (rh.combo > 20 ? .2 : 0), done = rh.mode === 'over', live = rh.mode === 'play' || rh.mode === 'pause';
+  g.drawImage(FG_BG, 0, 0);
+  // le feu du four : des flammes qui ondulent, plus hautes avec la chaleur des coups
+  for (let x = 16; x < 61; x++) { const dx = (x - 38) / 22, hmax = 50 * Math.sqrt(Math.max(0, 1 - dx * dx)), h = Math.max(2, hmax * (.45 + .25 * Math.sin(x * .5 + rh.tick * .3) * Math.sin(x * .23 - rh.tick * .17) + heat * .3));
+    for (let k = 0; k < h; k++) { const f = k / h; if (f > .8 && (x + k + rh.tick) % 2) continue; px(g, f < .3 ? '#fff4b0' : f < .55 ? '#ffd84a' : f < .8 ? '#ff8a3a' : '#c8461a', x, 147 - k); } }
+  g.globalAlpha = .08 + heat * .05; for (let i = 0; i < 4; i++) { g.fillStyle = '#ff8a3a'; g.beginPath(); g.arc(38, 128, 40 + i * 22, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1;
+  for (const e of rh.embers || []) { g.globalAlpha = Math.min(1, e.life / 30); px(g, e.life > 50 ? '#ffd84a' : '#ff6a2a', e.x, e.y, 1, 1); } g.globalAlpha = 1;
+  // le râtelier : les trois dernières armes forgées
+  (games.forgeArmory || []).slice(0, 3).forEach((a, i) => { const m = (a.metals || ['fer', 'fer', 'fer']).map(n => (FG_METALS.find(x => x[0] === n) || FG_METALS[0]).slice(2)), [s0, s1] = fgSpan(a.kind); fgWeapon(274 - (s0 + s1) / 2 * .5, 48 + i * 18, .5, a.kind, {blade: m[0], guard: m[1], pommel: m[2]}); });
+  // les pièces qui arrivent, selon leur acte : lingots de la droite, pièces de garde des deux côtés, gemmes d'en haut
+  if (live) for (let i = rh.notes.length - 1; i >= 0; i--) {
+    const n = rh.notes[i], d = (n.t - now) * FG.V; if (d > 330 || (n.judged && n !== rh.held)) continue;
+    if (n.act === 2) {
+      if (n.len) { const y0 = FG.AY - Math.max(0, d), y1 = FG.AY - (n.t + n.len - now) * FG.V; if (y0 > y1) { px(g, '#6a3a8a', FG.AX - 3, y1, 7, y0 - y1); px(g, n === rh.held ? '#fff4b0' : '#d8b0ff', FG.AX - 2, y1, 5, y0 - y1); } }
+      if (n.judged) continue; const y = FG.AY - d - 6;
+      if (n.both) { px(g, '#ffd84a', FG.AX - 8, y, 16, 1); fgGem(FG.AX - 9, y, FG_GEMS[i % 4]); fgGem(FG.AX + 9, y, FG_GEMS[(i + 1) % 4]); if (n.first) px(g, '#ffffff', FG.AX - 12, y + 6, 24, 1); }
+      else fgGem(FG.AX, y, FG_GEMS[i % 4]);
+      continue;
+    }
+    if (n.len) { const x0 = FG.AX + Math.max(0, d), x1 = FG.AX + (n.t + n.len - now) * FG.V; if (x1 > x0) { px(g, '#6a1a0a', x0, FG.AY - 3, x1 - x0, 8); px(g, n === rh.held ? '#ffd84a' : '#ff5a2a', x0, FG.AY - 2, x1 - x0, 5); px(g, '#ffb84a', x0, FG.AY - 2, x1 - x0, 1); } }
+    if (n.judged) continue;
+    const s = n.act === 1 ? n.side : 1, x = FG.AX + s * d, big = n.acc > .85, r = big ? 6 : 4;
+    px(g, '#3a0a04', x - r - 1, FG.AY - r, 2 * r + 2, 2 * r + 1); px(g, big ? '#ffd84a' : '#ff8a3a', x - r, FG.AY - r + 1, 2 * r, 2 * r - 1); px(g, '#fff4b0', x - r + 1, FG.AY - r + 2, r, 2);
+    if (n.act === 1) { const c = s < 0 ? '#8ad8ff' : '#ffb07a'; for (let k = 0; k < 4; k++) px(g, c, x - s * (r + 3 + k), FG.AY - 3 + k, 1, 7 - 2 * k); }  // la flèche du côté (froide à gauche, chaude à droite)
+  }
+  // la cible : là où frapper
+  if (live && !done) { const a = rh.act; if (a === 2) { px(g, '#ffd84a', FG.AX - 14, FG.AY - 6, 28, 1); } else { px(g, '#ffd84a', FG.AX - 1, FG.AY - 10, 2, 3); px(g, '#ffd84a', FG.AX - 1, FG.AY + 6, 2, 3); } }
+  // l'arme sur l'enclume : la pièce de l'acte en cours, rouge de chaleur, passe sous le marteau
+  const hot = heat > .5 ? ['#fffae0', '#ffd84a', '#e0641a'] : FG_HOT, P = {blade: rh.parts[0] ? rh.parts[0].slice(2) : hot};
+  if (rh.act >= 1 || rh.parts[1]) P.guard = rh.parts[1] ? rh.parts[1].slice(2) : hot;
+  if (rh.act >= 2 || rh.parts[2]) P.pommel = rh.parts[2] ? rh.parts[2].slice(2) : hot;
+  if (!done && rh.mode !== 'ready' && rh.mode !== 'load') {
+    const S = FG_SHAPE[rh.kind], a0 = rh.notes.filter(n => n.act === 0), f = rh.parts[0] ? 1 : a0.length ? a0.filter(n => n.judged && !n.missed).length / a0.length : 1;
+    const want = rh.act === 0 ? FG.AX - (3 + S.L * (.3 + .7 * f) * .6) : rh.act === 1 ? FG.AX : FG.AX + 3 + S.G + 3; rh.wx = rh.wx == null ? want : rh.wx + (want - rh.wx) * .08;
+    fgWeapon(rh.wx, FG.AY - 4, 1, rh.kind, P, f);
+  }
+  // le marteau : il se lève, puis retombe sur la pièce à chaque coup
+  const swing = rh.tick - rh.tap < 4 ? 0 : Math.min(1, (rh.tick - rh.tap - 4) / 8), ang = -Math.PI / 5 + swing * 1.05, hx = FG.AX + 44, hy = FG.AY - 34;
+  if (!done) { g.save(); g.translate(hx, hy); g.rotate(ang); px(g, '#2a1a0c', -40, -3, 40, 6); px(g, '#8a5a30', -40, -2, 40, 4); px(g, '#c8945a', -40, -2, 40, 1); px(g, '#16161e', -54, -10, 18, 20); px(g, '#4a4a5a', -53, -9, 16, 18); px(g, '#7a7a8a', -53, -9, 16, 2); px(g, '#2a2a36', -53, 7, 16, 2); g.restore(); }
   for (const s of rh.sparks) { g.globalAlpha = Math.min(1, s.life / 14); px(g, s.col, s.x, s.y, 2, 2); g.globalAlpha = 1; }
-  if (rh.judge && rh.mode === 'play') pxFont(g, rh.judge.text, FG.AX, FG.AY - 70, rh.judge.col, 7, 'center');
-  if (done) { let [, , q] = FG_GRADE[rh.grade] || FG_GRADE.D; if (rh.kind === 'Sabre' || rh.kind === 'Marteau') q = {Fine: 'Fin', Cabossée: 'Cabossé'}[q] || q; /* les armes au masculin */ fgBlade(W / 2 - 40, 46, 1, rh.kind, FG_GRADE[rh.grade] || FG_GRADE.D, 2); pxFont(g, rh.kind + ' ' + q.toLowerCase(), W / 2, 76, (FG_GRADE[rh.grade] || FG_GRADE.D)[1], 7, 'center'); }
+  if (rh.judge && rh.mode === 'play') pxFont(g, rh.judge.text, FG.AX, FG.AY - 58, rh.judge.col, 7, 'center');
+  if (rh.banner && rh.mode === 'play') gameText(g, W, rh.banner.lines.map(([t, c], i) => [t, c, i ? 6 : 9]), 58);
+  if (done) {  // l'arme finie, en grand, son nom, et la collection
+    if (!rh.saved) fgSave();
+    const pm = rh.parts.map(p => p || FG_METALS[0]), [s0, s1] = fgSpan(rh.kind); g.fillStyle = 'rgba(11,3,28,.6)'; g.fillRect(0, 10, W, 76);
+    fgWeapon(W / 2 - (s0 + s1), 34, 2, rh.kind, {blade: pm[0].slice(2), guard: pm[1].slice(2), pommel: pm[2].slice(2)});
+    pxFont(g, fgName(rh.kind, pm[0]).toUpperCase(), W / 2, 62, pm[0][3], 8, 'center');
+    pxFont(g, 'garde ' + (/^[aeiouéè]/i.test(pm[1][0]) ? 'd\'' : 'de ') + pm[1][0] + ' · pommeau ' + (/^[aeiouéè]/i.test(pm[2][0]) ? 'd\'' : 'de ') + pm[2][0], W / 2, 72, '#e8e0ff', 6, 'center');
+    const nb = Object.keys(games.forgeCollection || {}).length; pxFont(g, (rh.isNew ? 'NOUVELLE ARME ! ' : 'Déjà dans ta collection · ') + nb + ' / ' + FG_KINDS.length * FG_METALS.length, W / 2, 82, rh.isNew ? '#ffd84a' : '#a8a0c8', 6, 'center');
+  }
   if (rh.mode !== 'ready' && rh.mode !== 'load') {
     rhProgress(now, '#ff8a3a'); pxFont(g, String(rh.score).padStart(7, '0'), 4, 14, '#ffffff', 7);
     if (rh.combo > 4) pxFont(g, rh.combo + ' combo', W - 4, 14, '#ff8a3a', 7, 'right');
-    if (!done) pxFont(g, Math.round(f * 100) + ' % forgé', W - 4, 26, '#ffd8b0', 6, 'right');
+    if (!done) { const s = rh.acts[rh.act]; pxFont(g, ['LAME', 'GARDE', 'POMMEAU'][rh.act] + ' · ' + (s.n ? fgMetal(s.sum / s.n)[0] : '…'), W - 4, 26, '#ffd8b0', 6, 'right'); }
     pxFont(g, rhStarTxt(rh.stars), W / 2, H - 6, '#8a7a6a', 6, 'center');
   }
-  if (rh.mode === 'play' && now < 0) pxFont(g, String(Math.ceil(-now)), W / 2, 60, '#ff8a3a', 16, 'center');
-  rhScreens(done ? 104 : 60);
+  if (rh.mode === 'play' && now < 0) pxFont(g, String(Math.ceil(-now)), W / 2, 40, '#ff8a3a', 16, 'center');
+  rhScreens(done ? 112 : 60);
   if (rh.tick % 15 === 0) cv.setAttribute('aria-label', 'Forge, ' + (rh.info?.name || '') + ' : ' + ({ready: 'prêt', load: 'chargement', play: 'en jeu', pause: 'pause', over: 'fini'}[rh.mode] || rh.mode) + ', score ' + rh.score + ', combo ' + rh.combo + ', ' +
-    Object.entries(rh.counts).map(([k, v]) => k.toLowerCase() + ' ' + v).join(', ') + ', lame forgée à ' + Math.round(f * 100) + ' %.');
+    Object.entries(rh.counts).map(([k, v]) => k.toLowerCase() + ' ' + v).join(', ') + ', acte ' + (rh.act + 1) + '.');
 }
-function rhInfo() { const res = games.rhythm || {}, all = Object.values(res), arm = games.forgeArmory || []; showStats([['Morceaux joués', all.length], ['Armes forgées', arm.length], ['Légendaires', arm.filter(a => a.grade === 'S').length], ['Meilleur combo', all.reduce((m, r) => Math.max(m, r.combo || 0), 0)]]); }
+function rhInfo() { const res = games.rhythm || {}, all = Object.values(res), arm = games.forgeArmory || [], col = Object.keys(games.forgeCollection || {});
+  showStats([['Morceaux joués', all.length], ['Armes forgées', arm.length], ['Collection', col.length + ' / ' + FG_KINDS.length * FG_METALS.length], ['Lames de mithril', col.filter(k => k.endsWith('|mithril')).length], ['Lames d\'étoile', col.filter(k => k.endsWith('|étoile')).length], ['Meilleur combo', Math.max(0, ...all.map(r => r.combo || 0))]]); }
 const FG_KEYS = k => k.length === 1 || k === 'Enter' || k.startsWith('Arrow');
-cv.onpointerdown = e => { e.preventDefault(); if (!rh) return; if (rh.mode === 'play') fgHit('m' + e.button); else rhPress(); };
+cv.onpointerdown = e => { e.preventDefault(); if (!rh) return; if (rh.mode === 'play') { const [x] = cpos(e); fgHit('m' + e.button, x < W / 2 ? -1 : 1); } else rhPress(); };  // un clic : le côté de la moitié de l'écran
 addEventListener('pointerup', e => { if (rh?.mode === 'play') fgRelease('m' + e.button); });
 document.addEventListener('keydown', e => {
   if (!keyOk(e) || !rh || e.ctrlKey || e.altKey || e.metaKey) return; const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (k === 'p' || k === 'Escape') { rhPause(); return; }
-  if (rh.mode === 'play') { if (FG_KEYS(k)) { e.preventDefault(); if (!e.repeat) fgHit(k); } return; }
+  if (rh.mode === 'play') { if (FG_KEYS(k)) { e.preventDefault(); if (!e.repeat) fgHit(k, fgSide(k)); } return; }
   if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!e.repeat) rhPress(); }
 });
 document.addEventListener('keyup', e => { if (!rh) return; if (e.key === ' ' && keyOk(e)) e.preventDefault(); const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (rh.mode === 'play' && FG_KEYS(k)) fgRelease(k); });
 cv.__rh = {st: () => rh, finish: hist => { rh.hist = hist; rh.mode = 'play'; rhCheckEnd(1e9); }};  // pour le test « local »
-{  // la manette : la croix, A, B, X, Y et les gâchettes hautes frappent (tenir pour un coup appuyé), Start lance, Select met en pause
-  const KEY = {14: 'd', 13: 'f', 12: 'j', 15: 'k', 2: 'd', 0: 'f', 3: 'j', 1: 'k', 4: 'd', 5: 'k', 9: ' ', 8: 'p'}, held = new Set();
+{  // la manette : à gauche la croix gauche, X, A et la gâchette gauche ; à droite la croix droite, B, Y et la gâchette droite ; Start lance, Select met en pause
+  const KEY = {14: 'd', 2: 'd', 0: 'f', 4: 'd', 13: 'f', 15: 'k', 1: 'k', 3: 'j', 5: 'k', 12: 'j', 9: ' ', 8: 'p'}, held = new Set();
   const send = (k, type) => document.dispatchEvent(new KeyboardEvent(type, {key: k, bubbles: true}));
   const loop = () => {
     requestAnimationFrame(loop); if (!view.classList.contains('on') || !navigator.getGamepads) return;
@@ -1209,16 +1320,22 @@ cv.__rh = {st: () => rh, finish: hist => { rh.hist = hist; rh.mode = 'play'; rhC
   };
   requestAnimationFrame(loop);
 }
-{  // vérification : les coups séparés d'au moins un quart de temps, un coup appuyé fini avant le suivant, le jugement (à l'heure, en retard, raté),
-   // un coup appuyé lâché trop tôt casse le combo, tenu jusqu'au bout il compte
+{  // vérification : trois actes dans l'ordre, des côtés à la garde (jamais plus de 4 fois le même), des gemmes doubles au pommeau, notes tenues
+   // finies avant la suivante ; le jugement : le mauvais côté, une gemme double à deux mains (ou à une seule), une note tenue lâchée ; le métal de chaque acte
   const c = rhCompose(RH_SONGS[3]), ch = Object.keys(RH_DIFFS).map(d => RHG.chart(rhChart(c, d), c, d)), bad = [], beat = 60 / RH_SONGS[3].bpm;
-  if (ch.some(x => x.length < 20 || x.some((n, i) => i && (n.t - x[i - 1].t < FG.MIN * beat - 1e-3 || x[i - 1].t + x[i - 1].len > n.t)))) bad.push('écarts');
-  if (!(rhStars(ch[0], c.len, 1) < rhStars(ch[3], c.len, 1))) bad.push('étoiles');
-  const keep = rh, notes = [{t: 0, len: 0}, {t: 1, len: 0}, {t: 2, len: 1}, {t: 4, len: 1}, {t: 6, len: 0}].map(n => ({...n, judged: false}));
-  rh = {tick: 0, mode: 'play', score: 0, combo: 0, maxCombo: 0, counts: {PARFAIT: 0, BIEN: 0, OK: 0, 'RATÉ': 0}, dts: [], sparks: [], notes, shaped: 0, heat: 0, held: null};
-  fgHit('f', .01); fgHit('f', 1.08); fgHit('f', 2); fgRelease('j', 2.5); const kept = rh.held === notes[2]; fgRelease('f', 2.5);
-  const broke = notes[2].broken && rh.combo === 0; fgHit('f', 4); fgRelease('f', 4.95);
-  if (rh.counts.PARFAIT !== 3 || rh.counts.BIEN !== 1 || !kept || !broke || !notes[3].tail || rh.shaped !== 5) bad.push('jugement ' + JSON.stringify(rh.counts) + ' ' + rh.shaped);
+  const runs = x => { let m = 1, r = 1; for (let i = 1; i < x.length; i++) { r = x[i].side === x[i - 1].side ? r + 1 : 1; m = Math.max(m, r); } return m; };
+  for (const x of ch) { const g1 = x.filter(n => n.act === 1);
+    if (x.length < 20 || x.some((n, i) => i && (n.act < x[i - 1].act || n.t - x[i - 1].t < FG.MIN * beat - 1e-3 || x[i - 1].t + x[i - 1].len > n.t)) || !g1.length || runs(g1) > 4 || g1.some(n => Math.abs(n.side) !== 1 || n.len)) bad.push('actes'); }
+  if (!ch[3].some(n => n.both) || !(rhStars(ch[0], c.len, 1) < rhStars(ch[3], c.len, 1))) bad.push('gemmes ou étoiles');
+  if (fgMetal(.5)[0] !== 'fer' || fgMetal(.8)[0] !== 'acier' || fgMetal(1)[0] !== 'étoile' || fgName('Épée', FG_METALS[2]) !== 'Épée d\'acier') bad.push('métaux');
+  const keep = rh, notes = [{t: 0, act: 0, len: 0}, {t: 1, act: 0, len: 1}, {t: 3, act: 1, side: -1, len: 0}, {t: 4, act: 1, side: 1, len: 0}, {t: 5, act: 2, both: true, len: 0}, {t: 6, act: 2, both: true, len: 0}].map(n => ({...n, judged: false}));
+  rh = {tick: 0, mode: 'play', score: 0, combo: 0, maxCombo: 0, counts: {PARFAIT: 0, BIEN: 0, OK: 0, 'RATÉ': 0}, dts: [], sparks: [], notes, info: {key: 'x', name: 'x'}, c: {len: 9}}; RHG.reset();
+  fgHit('f', -1, .01); fgHit('f', -1, 1); fgRelease('f', 1.5); const broke = notes[1].broken && rh.combo === 0;
+  fgHit('j', 1, 3); fgHit('j', 1, 4.01);  // la garde : la droite au lieu de la gauche, puis la droite à l'heure
+  fgHit('d', -1, 5); fgHit('k', 1, 5.05); fgHit('d', -1, 6.01); fgStep(6.3);  // le pommeau : la double à deux mains, puis à une seule
+  fgStep(6.4);
+  const ok = rh.counts.PARFAIT === 4 && rh.counts['RATÉ'] === 2 && broke && notes[2].missed && notes[5].missed && rh.parts.every(Boolean) && rh.parts[0][0] === 'bronze' && rh.parts[1][0] === 'fer' && rh.parts[2][0] === 'fer';
+  if (!ok) bad.push('jugement ' + JSON.stringify(rh.counts) + ' ' + rh.parts.map(p => p && p[0]));
   rh = keep;
   console.assert(!bad.length, 'forge', bad);
 }

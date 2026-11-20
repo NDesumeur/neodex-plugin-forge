@@ -1,9 +1,9 @@
 {
   "id": "neodex.forge",
   "name": "Forge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "NDesumeur",
-  "description": "Jeu de rythme à la forge : les lingots arrivent sur le rail, frappe quand ils touchent le marteau (une touche ou un clic), et garde la touche sur les barres longues pour un coup appuyé. Chaque coup réussi façonne la lame ; à la fin, l'arme forgée (dague, épée, sabre, hache, lance ou marteau) rejoint ton armurerie, de cabossée à légendaire selon ta note. Les 1200 morceaux de Rythme notés de 1 à 10 étoiles, ou des niveaux créés depuis ta musique ; combo, note de S à D. Se joue à la manette.",
+  "description": "Jeu de rythme à la forge, en trois actes : la lame (martèle les lingots qui arrivent sur l'enclume, tiens les barres pour l'étirer), la garde (les pièces arrivent des deux côtés : frappe du bon, ← ou D/F, → ou J/K), puis le pommeau (serti les gemmes qui tombent, les doubles avec les deux mains). La précision de chaque acte choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile. Six formes d'armes (dague, épée, sabre, hache, lance, marteau) : 36 lames à collectionner, les dernières posées sur le râtelier. Les 1200 morceaux de Rythme notés de 1 à 10 étoiles, ou des niveaux créés depuis ta musique ; combo, note de S à D. Se joue à la manette.",
   "icon": "icon.png",
   "entry": "index.js",
   "view": "forge",
