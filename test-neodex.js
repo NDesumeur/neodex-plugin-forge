@@ -29,5 +29,11 @@ module.exports = async ({ pj, sleep }) => {
   await sleep(1200); await shot('2-fin');
   const end = await pj(`(() => { const rh = document.getElementById('gc').__rh.st(); return [rh.mode, rh.hist.length].join(','); })()`);
   if (end !== 'over,200') throw new Error('écran de fin attendu : ' + end);
+  // les touches au choix : une case, puis X ; elle s'affiche en haut ; PAR DÉFAUT remet les touches d'origine
+  const kb = await pj(`(async () => { const v = document, b = v.querySelector('.kb[data-a="a"][data-i="0"]'), def = b.textContent; b.click();
+    v.dispatchEvent(new KeyboardEvent('keydown', {key: 'x', bubbles: true})); await new Promise(r => setTimeout(r, 50));
+    const set = [b.textContent, v.querySelector('.kbA').textContent]; v.getElementById('kbReset').click(); return [def, ...set, b.textContent].join(','); })()`);
+  if (!/^(\w),X,X\/\w,\1$/.test(kb)) throw new Error('touches au choix : ' + kb);
+  await pj("(document.querySelector('.kbRow').scrollIntoView({block: 'center'}), 0)"); await sleep(300); await shot('3-touches');
   return l;
 };

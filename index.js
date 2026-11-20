@@ -1,7 +1,7 @@
 // Forge : Un jeu de rythme à la forge : une arme forgée en trois actes sur la musique, la lame, la garde, puis le pommeau, chacun avec son geste. Ta précision choisit le métal de chaque pièce, du fer à l'étoile, et chaque nouvelle arme rejoint ta collection. Les 1200 morceaux de Rythme, ou ta propre musique.
 // Jeu NeoDex en pixel art dessiné à la main (police bitmap, cadres et boutons en pixels). Il tourne dans le bac à sable de NeoDex.
 const HTML = `<div class="appWrap wide">
-  <div class="agHead"><span class="label">Forge</span><span class="hint">Acte I : une touche · II : ← ou D/F, → ou J/K · III : deux mains · espace : jouer · P : pause</span></div>
+  <div class="agHead"><span class="label">Forge</span><span class="hint">Acte I : une touche · II : ← <span class="kbA"></span>, → <span class="kbB"></span> · III : deux mains · espace : jouer · P : pause</span></div>
   <div class="gMain"><div class="gameBox"><canvas id="gc" width="320" height="240"></canvas><button class="btn rhFs" id="rhFs">PLEIN ÉCRAN</button></div>
     <div class="gSide">
       <div class="sysCard"><b>RECORDS</b><div class="gStats" id="gStats"></div></div>
@@ -9,8 +9,8 @@ const HTML = `<div class="appWrap wide">
       <div class="row"><button class="btn" id="rhTabSongs">CHANSONS</button><button class="btn" id="rhTabMine">MES MUSIQUES</button></div>
       <div class="sysCard rhImport" id="rhImport" style="display:none"><div class="row"><button class="btn main" id="rhFileBtn">IMPORTER UN FICHIER AUDIO</button><input type="file" id="rhFile" accept="audio/*,.mp3,.m4a,.ogg,.opus,.wav,.flac,.webm" hidden></div><div class="row"><select class="f" id="rhMuList"></select><button class="btn" id="rhMuBtn">CRÉER LE NIVEAU</button></div><div class="row"><label>Difficulté <select class="f" id="rhStars"><option value="1">1 ★</option><option value="2">2 ★</option><option value="3" selected>3 ★</option><option value="4">4 ★</option><option value="5">5 ★</option><option value="6">6 ★</option><option value="7">7 ★</option><option value="8">8 ★</option><option value="9">9 ★</option><option value="10">10 ★</option></select></label></div><span class="hint" id="rhImpMsg">Un fichier ou une musique de NeoMusic : le jeu trouve son tempo et ses temps forts et en fait un niveau.</span></div>
       <div id="rhSongs"></div>
-      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label></div>
-      <div class="hint">Le soleil et la lune tournent l'un autour de l'autre. Quand celui qui tourne touche la dalle suivante (la dorée), appuie sur n'importe quelle touche ou clique : il se pose, et c'est l'autre qui tourne.</div><div class="hint">Le chemin suit le rythme : une ligne droite (un demi-tour) dure un temps, un virage à angle droit (un quart de tour) un demi-temps, un virage serré encore moins. Trois points bleus sur une dalle : l'astre y tourne plus lentement ; une boucle rose : il change de sens.</div><div class="hint">La difficulté de chaque niveau est calculée sur ses notes (densité, passages chargés) : de 1★ à 10★.</div>
+      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><span class="kbRow">Touches <span class="kbG">Gauche <button class="btn kb" data-a="a" data-i="0"></button><button class="btn kb" data-a="a" data-i="1"></button></span><span class="kbG">Droite <button class="btn kb" data-a="b" data-i="0"></button><button class="btn kb" data-a="b" data-i="1"></button></span><button class="btn kb" id="kbReset">PAR DÉFAUT</button></span><span class="hint kbHint">Clique une case puis appuie sur la touche voulue (Échap : annuler). Les flèches et la manette marchent toujours.</span></div>
+      <div class="hint">Forge une arme en trois actes sur la musique. Acte I, la lame : frappe quand le lingot touche l'enclume ; sur une barre rouge, garde la touche jusqu'à son bout. Acte II, la garde : les pièces arrivent des deux côtés, frappe du bon. Acte III, le pommeau : serti les gemmes qui tombent ; une gemme double se prend avec les deux mains.</div><div class="hint">La précision de chaque acte choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile. Six formes d'armes : 36 lames à collectionner, les trois dernières posées sur le râtelier.</div><div class="hint">La difficulté de chaque niveau est calculée sur ses notes (densité, passages chargés) : de 1★ à 10★.</div>
     </div></div>
 </div>`;
 const CSS = `.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
@@ -35,7 +35,8 @@ const CSS = `.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
 .rhImport #rhMuList{flex:1;min-width:0}
 .rhOpts{flex-direction:row!important;flex-wrap:wrap;gap:16px;align-items:center}
 .rhOpts label{display:flex;align-items:center;gap:8px}
-.gSide{max-width:460px}`;
+.gSide{max-width:460px}
+.kbRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.kbG{display:flex;align-items:center;gap:6px}.kbRow .kb{height:30px;min-width:30px;padding:0 6px;font-size:13px}.kbRow .kb.wait{outline:3px solid var(--acc,#ff4fa8)}.kbHint{width:100%;margin:0}`;
 /* ---------- l'habillage pixel art, dessiné à la main : police bitmap (accents compris), cadres, boutons, icônes ----------
    Tout est en pixels pleins, agrandis par 2 sans lissage : aucun dégradé, aucune ombre floue. */
 const PXK = (() => {
@@ -1064,7 +1065,7 @@ document.addEventListener('fullscreenchange', () => { if (!document.fullscreenEl
 $('gNew').onclick = () => { if (rh) rhSelect(rh.song, rh.diff); $('gNew').blur(); };
 function rhOpen() {
   const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset']) if (p[id] != null) $(id).value = p[id];
-  rhOffMs = +$('rhOffset').value; rhInfo();
+  rhOffMs = +$('rhOffset').value; kbLoad(p.keys); rhInfo();
   if (rh) { rhList(); return gameLoop(rh, RHG.key, RHG.update, rhDrawAll); }
   const last = games.rhythmLast || {song: 0, diff: 'normal'}; rhSelect(last.song, last.diff).catch(() => rhSelect(0, 'normal'));
 }
@@ -1296,6 +1297,33 @@ function fgDraw() {
 function rhInfo() { const res = games.rhythm || {}, all = Object.values(res), arm = games.forgeArmory || [], col = Object.keys(games.forgeCollection || {});
   showStats([['Morceaux joués', all.length], ['Armes forgées', arm.length], ['Collection', col.length + ' / ' + FG_KINDS.length * FG_METALS.length], ['Lames de mithril', col.filter(k => k.endsWith('|mithril')).length], ['Lames d\'étoile', col.filter(k => k.endsWith('|étoile')).length], ['Meilleur combo', Math.max(0, ...all.map(r => r.combo || 0))]]); }
 const FG_KEYS = k => k.length === 1 || k === 'Enter' || k.startsWith('Arrow');
+// les touches choisies dans les options : deux par côté. Les flèches et la manette marchent toujours, les autres touches gardent leur côté habituel
+const KB_A0 = ["d", "f"], KB_B0 = ["j", "k"], FG_L0 = [...FG_L], FG_R0 = [...FG_R];
+var rhKB = {a: [...KB_A0], b: [...KB_B0]}, kbWait = null;
+function kbApply() {
+  const {a, b} = rhKB, fix = (S, def, mine, other) => { const v = [...new Set([...mine, ...def.filter(k => !other.includes(k))])]; if (S instanceof Set) { S.clear(); v.forEach(k => S.add(k)); } else S.splice(0, S.length, ...v); };
+  fix(FG_L, FG_L0, a, b); fix(FG_R, FG_R0, b, a);
+  const n = k => k.toUpperCase(), A = a.map(n).join('/'), B = b.map(n).join('/');
+  view.querySelectorAll('.kbA').forEach(e => { e.textContent = A; }); view.querySelectorAll('.kbB').forEach(e => { e.textContent = B; });
+  view.querySelectorAll('.kb[data-a]').forEach(e => { e.textContent = n(rhKB[e.dataset.a][e.dataset.i]); e.classList.remove('wait'); });
+  
+}
+function kbLoad(k) { const ok = x => Array.isArray(x) && x.length === 2 && x.every(c => typeof c === 'string' && c.length === 1 && c !== ' ' && c !== 'p');
+  rhKB = k && ok(k.a) && ok(k.b) ? {a: [...k.a], b: [...k.b]} : {a: [...KB_A0], b: [...KB_B0]}; kbApply(); }
+console.assert((() => { const s = rhKB; rhKB = {a: ['x', 'c'], b: [KB_A0[0], 'v']}; kbApply(); const r = FG_L.has('x') && !FG_L.has(KB_A0[0]) && FG_R.has(KB_A0[0]) && FG_R.has('v'); rhKB = s; kbApply(); return r && FG_L.has(KB_A0[0]); })(), 'kbApply');
+view.querySelectorAll('.kb[data-a]').forEach(e => { e.onclick = () => { kbApply(); kbWait = e; e.textContent = '…'; e.classList.add('wait'); }; });
+$('kbReset').onclick = () => { kbWait = null; delete gstore('rhythmPrefs', {}).keys; saveGames(); kbLoad(null); $('kbReset').blur(); };
+document.addEventListener('keydown', e => {  // la touche attendue par une case : rien d'autre ne la reçoit
+  if (!kbWait) return; e.preventDefault(); e.stopImmediatePropagation();
+  const el = kbWait, k = e.key.length === 1 ? e.key.toLowerCase() : e.key; kbWait = null; el.blur();
+  if (k.length === 1 && k !== ' ' && k !== 'p') {
+    const a = el.dataset.a, i = +el.dataset.i, old = rhKB[a][i];
+    for (const x of ['a', 'b']) for (const j of [0, 1]) if (rhKB[x][j] === k) rhKB[x][j] = old;  // déjà prise par une autre case : les deux s'échangent
+    rhKB[a][i] = k; gstore('rhythmPrefs', {}).keys = rhKB; saveGames();
+  }
+  kbApply();
+}, true);
+kbApply();
 cv.onpointerdown = e => { e.preventDefault(); if (!rh) return; if (rh.mode === 'play') { const [x] = cpos(e); fgHit('m' + e.button, x < W / 2 ? -1 : 1); } else rhPress(); };  // un clic : le côté de la moitié de l'écran
 addEventListener('pointerup', e => { if (rh?.mode === 'play') fgRelease('m' + e.button); });
 document.addEventListener('keydown', e => {
@@ -1307,14 +1335,14 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => { if (!rh) return; if (e.key === ' ' && keyOk(e)) e.preventDefault(); const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (rh.mode === 'play' && FG_KEYS(k)) fgRelease(k); });
 cv.__rh = {st: () => rh, finish: hist => { rh.hist = hist; rh.mode = 'play'; rhCheckEnd(1e9); }};  // pour le test « local »
 {  // la manette : à gauche la croix gauche, X, A et la gâchette gauche ; à droite la croix droite, B, Y et la gâchette droite ; Start lance, Select met en pause
-  const KEY = {14: 'd', 2: 'd', 0: 'f', 4: 'd', 13: 'f', 15: 'k', 1: 'k', 3: 'j', 5: 'k', 12: 'j', 9: ' ', 8: 'p'}, held = new Set();
+  const KEY = {14: 'ArrowLeft', 2: 'ArrowLeft', 0: 'ArrowLeft', 4: 'ArrowLeft', 13: 'ArrowLeft', 15: 'ArrowRight', 1: 'ArrowRight', 3: 'ArrowRight', 5: 'ArrowRight', 12: 'ArrowRight', 9: ' ', 8: 'p'}, held = new Set();
   const send = (k, type) => document.dispatchEvent(new KeyboardEvent(type, {key: k, bubbles: true}));
   const loop = () => {
     requestAnimationFrame(loop); if (!view.classList.contains('on') || !navigator.getGamepads) return;
     const p = [...navigator.getGamepads()].find(Boolean); if (!p) return;
     const down = new Set();
     for (const [i, k] of Object.entries(KEY)) if (p.buttons[i]?.pressed) down.add(k);
-    if (rh?.mode !== 'play' && down.has('f')) down.add(' ');  // hors partie, A lance aussi le morceau
+    if (rh?.mode !== 'play' && p.buttons[0]?.pressed) down.add(' ');  // hors partie, A lance aussi le morceau
     for (const k of down) if (!held.has(k)) { held.add(k); send(k, 'keydown'); }
     for (const k of [...held]) if (!down.has(k)) { held.delete(k); send(k, 'keyup'); }
   };
