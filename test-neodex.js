@@ -22,7 +22,7 @@ module.exports = async ({ pj, sleep }) => {
   const tap = () => pj(`document.getElementById('gc').__rh.st().tap`);
   const t0 = await tap(); await pad(0, true); await pad(0, false); const t1 = await tap(); await sleep(150); await pad(14, true); await pad(14, false); const t2 = await tap();
   if (!(t1 > t0 && t2 > t1)) throw new Error('la manette devait frapper le temps : ' + [t0, t1, t2]);
-  await key('p'); await sleep(400);
+  await key('p'); for (let i = 0; i < 10 && !/: pause,/.test(await label()); i++) await sleep(200);
   if (!/: pause,/.test(await label())) throw new Error('P devait mettre en pause : « ' + await label() + ' »');
   // l'écran de fin et sa courbe de précision (une partie inventée : juste au début, des ratés au milieu)
   await pj(`(() => { const T = document.getElementById('gc').__rh, rh = T.st(), L = rh.c.len, h = []; for (let i = 0; i < 200; i++) { const t = i / 200 * L, mid = t > L * .4 && t < L * .6; h.push([t, mid ? (i % 3 ? 1 : 0) : (i % 7 ? 3 : 2)]); } T.finish(h); return 0; })()`);
@@ -35,5 +35,21 @@ module.exports = async ({ pj, sleep }) => {
     const set = [b.textContent, v.querySelector('.kbA').textContent]; v.getElementById('kbReset').click(); return [def, ...set, b.textContent].join(','); })()`);
   if (!/^(\w),X,X\/\w,\1$/.test(kb)) throw new Error('touches au choix : ' + kb);
   await pj("(document.querySelector('.kbRow').scrollIntoView({block: 'center'}), 0)"); await sleep(300); await shot('3-touches');
-  return l;
+  // l'armurerie se remplit (l'arme de la partie inventée y est), la commande du jour choisit l'arme
+  const arm = await pj(`document.getElementById('gc').__rh.arm()`);
+  if (!/^[1-9]\d* \/ 36 armes · lignes : fer, bronze/.test(arm)) throw new Error('armurerie : ' + arm);
+  await pj("(document.getElementById('fgArm').scrollIntoView({block: 'center'}), 0)"); await sleep(300);
+  // l'enchantement : un 4e acte de runes (gauche, droite, en alternance, sans notes tenues), puis la lueur sur l'arme finie
+  await pj(`(() => { const s = document.getElementById('fgEnch'); s.value = '1'; s.dispatchEvent(new Event('change')); return 0; })()`); await sleep(1000);
+  for (let i = 0; i < 40 && !/: prêt,/.test(await label()); i++) await sleep(500);
+  const en = await pj(`(() => { const N = document.getElementById('gc').__rh.st().notes, R = N.filter(n => n.act === 3); return [new Set(N.map(n => n.act)).size, R.length > 4, R.every(n => !n.len), R.some(n => n.side < 0) && R.some(n => n.side > 0)].join(','); })()`);
+  if (en !== '4,true,true,true') throw new Error('4e acte : ' + en);
+  await shot('4-runes');
+  await pj(`(() => { const rh = document.getElementById('gc').__rh.st(); for (const n of rh.notes) if (n.act === 3) { n.judged = 1; } rh.acts[3] = {sum: 9.5, n: 10}; return 0; })()`);
+  await pj(`(() => { const T = document.getElementById('gc').__rh, rh = T.st(), L = rh.c.len, h = []; for (let i = 0; i < 200; i++) h.push([i / 200 * L, 3]); T.finish(h); return 0; })()`);
+  await sleep(1200); await shot('5-enchantee');
+  const ench = await pj(`document.getElementById('gc').__rh.st().ench?.[0] || ''`);
+  await pj(`(() => { const s = document.getElementById('fgEnch'); s.value = '0'; s.dispatchEvent(new Event('change')); return 0; })()`);
+  if (ench !== 'étoiles') throw new Error('enchantement attendu « étoiles » : ' + ench);
+  return l + ' · armurerie ok · enchantement ok';
 };

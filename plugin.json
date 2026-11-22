@@ -1,9 +1,9 @@
 {
   "id": "neodex.forge",
   "name": "Forge",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": "NDesumeur",
-  "description": "Jeu de rythme à la forge, en trois actes : la lame (martèle les lingots qui arrivent sur l'enclume, tiens les barres pour l'étirer), la garde (les pièces arrivent des deux côtés : frappe du bon, ← ou D/F, → ou J/K), puis le pommeau (serti les gemmes qui tombent, les doubles avec les deux mains). La précision de chaque acte choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile. Six formes d'armes (dague, épée, sabre, hache, lance, marteau) : 36 lames à collectionner, les dernières posées sur le râtelier. Les 1200 morceaux de Rythme notés de 1 à 10 étoiles, ou des niveaux créés depuis ta musique ; combo, note de S à D. Se joue à la manette. Touches au choix dans les options.",
+  "description": "Jeu de rythme à la forge, en trois actes : la lame (martèle les lingots qui arrivent sur l'enclume, tiens les barres pour l'étirer), la garde (les pièces arrivent des deux côtés : frappe du bon, ← ou D/F, → ou J/K), puis le pommeau (serti les gemmes qui tombent, les doubles avec les deux mains). La précision de chaque acte choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile. Six formes d'armes (dague, épée, sabre, hache, lance, marteau) : 36 lames à collectionner, les dernières posées sur le râtelier. Les 1200 morceaux de Rythme notés de 1 à 10 étoiles, ou des niveaux créés depuis ta musique ; combo, note de S à D. Se joue à la manette. Touches au choix dans les options. Nouveau : la commande du jour (un client choisit l'arme, le métal et ta façon de jouer) et l'armurerie avec toute ta collection. Au choix, un 4e acte : l'enchantement (grave des runes à gauche puis à droite ; ta précision fait briller l'arme de braises, de givre, de foudre ou d'étoiles).",
   "icon": "icon.png",
   "entry": "index.js",
   "view": "forge",

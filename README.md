@@ -42,3 +42,15 @@ Tes scores et notes par niveau et tes réglages sont enregistrés par NeoDex, sa
 Dans NeoDex : **NeoStore → À découvrir → Forge → Installer**.
 
 Développer un plugin : voir le [SDK NeoDex](https://github.com/NDesumeur/neodex-sdk).
+
+## La commande du jour
+
+Chaque jour, un client passe une commande, la même pour tout le monde : une arme (elle remplace celle du morceau), un métal au moins pour une des trois pièces, et une façon de jouer (au plus quelques ratés, un combo à atteindre, ou aucune barre lâchée). Elle s'affiche sur l'écran de départ ; à la fin, l'écran dit si elle est remplie. Une fois remplie, tu forges librement jusqu'au lendemain. L'option « Commande : Non » l'enlève.
+
+## L'armurerie
+
+La carte « L'armurerie », sous la liste des morceaux, montre toute la collection : une colonne par arme, une ligne par métal de lame (fer, bronze, acier, damas, mithril, étoile). Les armes pas encore forgées restent en ombre, et chaque arme forgée montre la meilleure note obtenue avec elle. On y voit aussi le nombre de commandes remplies et la série de jours.
+
+## L'enchantement (4e acte)
+
+Dans les options, « Enchantement : Oui » ajoute un 4e acte : des runes arrivent à gauche puis à droite, à graver du bon côté. Ta précision donne une lueur à l'arme : braises, givre, foudre ou étoiles. L'armurerie garde le meilleur enchantement de chaque arme (un petit point de couleur).

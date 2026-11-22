@@ -42,3 +42,15 @@ Your scores and grades per level and your settings are stored by NeoDex, backed 
 In NeoDex: **NeoStore → Discover → Forge → Install**.
 
 Building a plugin: see the [NeoDex SDK](https://github.com/NDesumeur/neodex-sdk).
+
+## The daily order
+
+Every day a customer places an order, the same for everyone: a weapon (it replaces the song's weapon), a minimum metal for one of the three parts, and a way to play (a few misses at most, a combo to reach, or no released bar). It shows on the start screen; at the end, the screen says whether it was filled. Once filled, you forge freely until the next day. The “Order: No” option turns it off.
+
+## The armoury
+
+The “Armoury” card, below the song list, shows the whole collection: one column per weapon, one row per blade metal (iron, bronze, steel, damascus, mithril, star). Weapons not yet forged stay in shadow, and each forged weapon shows the best grade you got with it. It also shows how many orders you filled and your streak of days.
+
+## The enchantment (4th act)
+
+In the options, « Enchantment: Yes » adds a 4th act: runes come from the left then the right, to carve on the right side. Your accuracy gives the weapon a glow: embers, frost, lightning or stars. The armoury keeps the best enchantment of each weapon (a small coloured dot).

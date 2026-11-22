@@ -9,11 +9,13 @@ const HTML = `<div class="appWrap wide">
       <div class="row"><button class="btn" id="rhTabSongs">CHANSONS</button><button class="btn" id="rhTabMine">MES MUSIQUES</button></div>
       <div class="sysCard rhImport" id="rhImport" style="display:none"><div class="row"><button class="btn main" id="rhFileBtn">IMPORTER UN FICHIER AUDIO</button><input type="file" id="rhFile" accept="audio/*,.mp3,.m4a,.ogg,.opus,.wav,.flac,.webm" hidden></div><div class="row"><select class="f" id="rhMuList"></select><button class="btn" id="rhMuBtn">CRÉER LE NIVEAU</button></div><div class="row"><label>Difficulté <select class="f" id="rhStars"><option value="1">1 ★</option><option value="2">2 ★</option><option value="3" selected>3 ★</option><option value="4">4 ★</option><option value="5">5 ★</option><option value="6">6 ★</option><option value="7">7 ★</option><option value="8">8 ★</option><option value="9">9 ★</option><option value="10">10 ★</option></select></label></div><span class="hint" id="rhImpMsg">Un fichier ou une musique de NeoMusic : le jeu trouve son tempo et ses temps forts et en fait un niveau.</span></div>
       <div id="rhSongs"></div>
-      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><span class="kbRow">Touches <span class="kbG">Gauche <button class="btn kb" data-a="a" data-i="0"></button><button class="btn kb" data-a="a" data-i="1"></button></span><span class="kbG">Droite <button class="btn kb" data-a="b" data-i="0"></button><button class="btn kb" data-a="b" data-i="1"></button></span><button class="btn kb" id="kbReset">PAR DÉFAUT</button></span><span class="hint kbHint">Clique une case puis appuie sur la touche voulue (Échap : annuler). Les flèches et la manette marchent toujours.</span></div>
+      <div class="sysCard rhOpts"><label>Volume <input type="range" id="rhVol" min="0" max="100" value="70"></label><label>Son des clics <select class="f gSel" id="rhClick"><option value="0" selected>Doux</option><option value="1">Clap</option><option value="2">Bois</option><option value="3">Grosse caisse</option><option value="4">Cristal</option><option value="5">Pop</option><option value="6">Charleston</option><option value="7">Caisse claire</option><option value="8">Pluck</option><option value="9">Tok</option><option value="-1">Aucun</option></select></label><label title="Un 4e acte : graver des runes pour faire briller l'arme">Enchantement <select class="f gSel" id="fgEnch"><option value="0" selected>Non</option><option value="1">Oui</option></select></label><label title="La commande du jour : un client choisit l'arme et la façon de jouer">Commande <select class="f gSel" id="fgOrd"><option value="1" selected>Oui</option><option value="0">Non</option></select></label><label>Décalage <input type="number" class="f" id="rhOffset" min="-300" max="300" step="5" value="0" style="width:80px" title="Réglé tout seul après chaque partie"> ms</label><span class="kbRow">Touches <span class="kbG">Gauche <button class="btn kb" data-a="a" data-i="0"></button><button class="btn kb" data-a="a" data-i="1"></button></span><span class="kbG">Droite <button class="btn kb" data-a="b" data-i="0"></button><button class="btn kb" data-a="b" data-i="1"></button></span><button class="btn kb" id="kbReset">PAR DÉFAUT</button></span><span class="hint kbHint">Clique une case puis appuie sur la touche voulue (Échap : annuler). Les flèches et la manette marchent toujours.</span></div>
+      <div class="sysCard fgArmCard"><b>L'ARMURERIE</b><canvas id="fgArm" width="320" height="136"></canvas><div class="hint" id="fgArmN"></div></div>
       <div class="hint">Forge une arme en trois actes sur la musique. Acte I, la lame : frappe quand le lingot touche l'enclume ; sur une barre rouge, garde la touche jusqu'à son bout. Acte II, la garde : les pièces arrivent des deux côtés, frappe du bon. Acte III, le pommeau : serti les gemmes qui tombent ; une gemme double se prend avec les deux mains.</div><div class="hint">La précision de chaque acte choisit le métal de sa pièce : fer, bronze, acier, damas, mithril ou étoile. Six formes d'armes : 36 lames à collectionner, les trois dernières posées sur le râtelier.</div><div class="hint">La difficulté de chaque niveau est calculée sur ses notes (densité, passages chargés) : de 1★ à 10★.</div>
     </div></div>
 </div>`;
-const CSS = `.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+const CSS = `#fgArm{width:100%;max-width:640px;image-rendering:pixelated;display:block;margin:6px 0;border-radius:4px}
+.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
 .gameBox{display:grid;place-items:center;padding:10px;background:#05010b;flex:2;min-width:320px;position:relative}
 .gameBox canvas{width:100%;image-rendering:pixelated;cursor:var(--cp,pointer);touch-action:none}
 .gSide{display:flex;flex-direction:column;gap:14px;flex:1;min-width:250px;max-width:420px}
@@ -1059,12 +1061,13 @@ $('rhFs').onclick = () => { rhFull(!document.fullscreenElement); $('rhFs').blur(
 $('rhOffset').addEventListener('change', () => { rhOffMs = +$('rhOffset').value; });
 $('rhClick').onchange = () => { rhAudio(); rhCtx.resume(); rhClick(); };  // le son choisi, pour l'entendre
 $('rhVol').oninput = () => { if (rhOut) rhOut.gain.value = +$('rhVol').value / 100 * .6; };
-for (const id of ['rhVol', 'rhClick', 'rhOffset']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
+for (const id of ['rhVol', 'rhClick', 'rhOffset', 'fgOrd', 'fgEnch']) $(id).addEventListener('change', () => { gstore('rhythmPrefs', {})[id] = $(id).value; saveGames(); });
 setInterval(() => { if (rhCtx?.state === 'running' && (!view.classList.contains('on') || rh?.mode !== 'play')) rhCtx.suspend(); }, 200);  // la musique s'arrête avec la partie
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) rhPause(); });  // Échap sort du plein écran : on met en pause
 $('gNew').onclick = () => { if (rh) rhSelect(rh.song, rh.diff); $('gNew').blur(); };
 function rhOpen() {
-  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset']) if (p[id] != null) $(id).value = p[id];
+  const p = games.rhythmPrefs || {}; for (const id of ['rhVol', 'rhClick', 'rhOffset', 'fgOrd', 'fgEnch']) if (p[id] != null) $(id).value = p[id];
+  fgArmoryDraw();
   rhOffMs = +$('rhOffset').value; kbLoad(p.keys); rhInfo();
   if (rh) { rhList(); return gameLoop(rh, RHG.key, RHG.update, rhDrawAll); }
   const last = games.rhythmLast || {song: 0, diff: 'normal'}; rhSelect(last.song, last.diff).catch(() => rhSelect(0, 'normal'));
@@ -1076,7 +1079,7 @@ function rhOpen() {
    l'étoile ; chaque arme rejoint l'armurerie, et une nouvelle (forme × métal de la lame) s'ajoute à la collection. ---------- */
 const FG = {AX: 160, AY: 146, V: 110, MIN: .25};  // AX, AY : le point de frappe, sur l'enclume ; V : la vitesse des pièces (pixels par seconde) ; MIN : écart minimum, en temps
 const FG_KINDS = ['Dague', 'Épée', 'Sabre', 'Hache', 'Lance', 'Marteau'];
-const FG_ACTS = [['ACTE I · LA LAME', 'Martèle les lingots · tiens les barres pour étirer'], ['ACTE II · LA GARDE', 'Frappe du bon côté : ← ou D/F, → ou J/K'], ['ACTE III · LE POMMEAU', 'Serti les gemmes · les doubles à deux mains']];
+const FG_ACTS = [['ACTE I · LA LAME', 'Martèle les lingots · tiens les barres pour étirer'], ['ACTE II · LA GARDE', 'Frappe du bon côté : ← ou D/F, → ou J/K'], ['ACTE III · LE POMMEAU', 'Serti les gemmes · les doubles à deux mains'], ["ACTE IV · L'ENCHANTEMENT", 'Grave les runes : à gauche, puis à droite']];
 // les métaux, de la précision la plus basse à la plus haute : [nom, précision minimum, clair, moyen, sombre]
 const FG_METALS = [['fer', 0, '#c8c0b8', '#7a726a', '#3e3834'], ['bronze', .6, '#ffd098', '#c8823a', '#6a3a14'], ['acier', .75, '#f0f6ff', '#a8b4c4', '#4a5464'],
   ['damas', .87, '#e8e8f8', '#8a8aa8', '#3a3a54'], ['mithril', .94, '#f0ffff', '#8ae0f0', '#2a7a98'], ['étoile', .98, '#fffae0', '#d8b0ff', '#6a3ab8']];
@@ -1086,20 +1089,21 @@ const fgSide = k => FG_L.has(k) ? -1 : FG_R.has(k) ? 1 : 0;
 const fgMetal = acc => FG_METALS.filter(m => acc >= m[1] - 1e-9).at(-1);
 const fgName = (kind, m) => `${kind} ${/^[aeiouéè]/i.test(m[0]) ? 'd\'' : 'de '}${m[0]}`;
 const RHG = {key: 'forge', factor: 1.05, color: '#ff8a3a',
-  help: [['Trois actes : la lame, la garde, le pommeau', '#ffd8b0'], ['Chaque acte a son geste, affiché à son début', '#e8e0ff'], ['La précision choisit le métal : du fer à l\'étoile', '#e8e0ff']],
+  get help() { return [[fgEnchOn() ? 'Quatre actes : la lame, la garde, le pommeau, les runes' : 'Trois actes : la lame, la garde, le pommeau', '#ffd8b0'], ['Chaque acte a son geste, affiché à son début', '#e8e0ff'], ['La précision choisit le métal : du fer à l\'étoile', '#e8e0ff']]; },
   // les notes ensemble n'en font qu'une ; trop rapprochées : retirées. Le morceau est coupé en trois actes (par tiers de notes), avec un temps
   // de pause avant chaque nouvel acte. La garde : un côté par note (graves à gauche, aigus à droite, jamais plus de 4 fois le même) ;
   // le pommeau : les accents deviennent des gemmes doubles. Les notes longues (lame, pommeau) se tiennent
-  chart(base, c) {
+  chart(base, c, d, E = fgEnchOn()) {
     const beat = (c.step || .125) * 4; let out = [];
     for (const n of base) { const p = out.at(-1); if (p && n.t - p.t < FG.MIN * beat - 1e-6) continue; out.push({t: n.t, len: (n.len || 0) >= beat * .9 ? n.len : 0, acc: n.acc ?? (out.length % 4 ? 0 : 1), lane: n.lane ?? 0}); }
     if (out.length < 6) return out.map(n => ({...n, act: 0, len: 0}));
-    const t1 = out[Math.floor(out.length / 3)].t, t2 = out[Math.floor(out.length * 2 / 3)].t;
-    out = out.filter(n => !(n.t < t1 && n.t >= t1 - beat * 1.5) && !(n.t < t2 && n.t >= t2 - beat * 1.5));  // une respiration avant chaque acte
+    const K = E ? 4 : 3, T = Array.from({length: K - 1}, (_, j) => out[Math.floor(out.length * (j + 1) / K)].t);
+    out = out.filter(n => !T.some(x => n.t < x && n.t >= x - beat * 1.5));  // une respiration avant chaque acte
     let run = 0, last = 0;
     out.forEach((n, i) => {
-      n.act = n.t < t1 ? 0 : n.t < t2 ? 1 : 2;
-      const next = out[i + 1]; if (n.len && next) n.len = Math.max(0, Math.min(n.len, next.t - n.t - beat * .25)); if (n.len < beat * .75 || n.act === 1) n.len = 0;
+      n.act = T.filter(x => n.t >= x).length;
+      const next = out[i + 1]; if (n.len && next) n.len = Math.max(0, Math.min(n.len, next.t - n.t - beat * .25)); if (n.len < beat * .75 || n.act === 1 || n.act === 3) n.len = 0;
+      if (n.act === 3) n.side = i % 2 ? 1 : -1;
       if (n.act === 1) { let s = n.lane < 2 ? -1 : 1; run = s === last ? run + 1 : 1; if (run > 4) { s = -s; run = 1; } n.side = last = s; }
       if (n.act === 2) n.both = !n.len && n.acc > .7 && (!i || n.t - out[i - 1].t >= beat * .5);
       delete n.lane;
@@ -1107,13 +1111,60 @@ const RHG = {key: 'forge', factor: 1.05, color: '#ff8a3a',
     return out;
   },
   reset() {
-    Object.assign(rh, {judge: null, tap: -99, tapSide: 0, held: null, heat: 0, embers: [], banner: null, acts: [0, 1, 2].map(() => ({sum: 0, n: 0})), parts: [null, null, null], act: 0, wx: null,
-      kind: FG_KINDS[(rh.info.key.length * 7 + Math.round(rh.c.len)) % FG_KINDS.length], saved: false, isNew: false});
+    Object.assign(rh, {judge: null, tap: -99, tapSide: 0, held: null, heat: 0, embers: [], banner: null, acts: [0, 1, 2, 3].map(() => ({sum: 0, n: 0})), ench: null, parts: [null, null, null], act: 0, wx: null,
+      kind: FG_KINDS[(rh.info.key.length * 7 + Math.round(rh.c.len)) % FG_KINDS.length], saved: false, isNew: false, order: fgOrderNow(), orderOk: null});
+    if (rh.order) rh.kind = rh.order.kind;  // la commande choisit l'arme
     rh.banner = {lines: [[FG_ACTS[0][0], '#ffd84a'], [FG_ACTS[0][1], '#ffd8b0']], t: 200};  // le premier acte s'annonce pendant le compte à rebours
   },
   update() { fgStep(rhNow()); },
   draw() { fgDraw(); },
 };
+/* ---------- 1.1.0 : la commande du jour (un client, une arme, un métal, une façon de jouer) et l'armurerie (toute la collection, avec la meilleure note) ---------- */
+const FG_CLIENTS = ['Le capitaine', 'La reine', 'Le chasseur', 'La chevalière', 'Le bûcheron', 'La garde du pont', 'Le marchand', 'La pirate'];
+const FG_ART = {Dague: 'une dague', Épée: 'une épée', Sabre: 'un sabre', Hache: 'une hache', Lance: 'une lance', Marteau: 'un marteau'};
+const fgDay = (k = 0) => { const d = new Date(); d.setDate(d.getDate() + k); return d.toLocaleDateString('sv'); };  // AAAA-MM-JJ, à l'heure du PC
+function fgOrder(day) {  // la même commande pour tout le monde le même jour
+  const r = seeded([...day].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 1e9, 7)), pick = A => A[Math.floor(r() * A.length)];
+  const cond = pick([{t: 'miss', v: 3 + Math.floor(r() * 6)}, {t: 'combo', v: 30 + 10 * Math.floor(r() * 4)}, {t: 'held', v: 0}]);
+  return {client: pick(FG_CLIENTS), kind: pick(FG_KINDS), part: Math.floor(r() * 3), metal: 1 + Math.floor(r() * 3), cond};
+}
+const fgOrderTxt = o => [o.client + ' veut ' + FG_ART[o.kind], ['lame', 'garde', 'pommeau'][o.part] + ' en ' + FG_METALS[o.metal][0] + ' ou mieux · ' + (o.cond.t === 'miss' ? o.cond.v + ' ratés au plus' : o.cond.t === 'combo' ? 'un combo de ' + o.cond.v : 'aucune barre lâchée')];
+// la commande du jour est proposée tant qu'elle n'est pas remplie (option « Commande »)
+const fgOrderNow = () => ($('fgOrd')?.value ?? '1') === '1' && games.forgeOrders?.last !== fgDay() ? fgOrder(fgDay()) : null;
+function fgOrderEnd() {
+  const o = rh.order; rh.orderOk = null; if (!o) return;
+  const c = o.cond; rh.orderOk = FG_METALS.indexOf(rh.parts[o.part]) >= o.metal && (c.t === 'miss' ? rh.counts['RATÉ'] <= c.v : c.t === 'combo' ? rh.maxCombo >= c.v : !rh.notes.some(n => n.broken));
+  if (!rh.orderOk) return;
+  const O = gstore('forgeOrders', {n: 0, streak: 0, last: ''}); O.streak = O.last === fgDay(-1) ? O.streak + 1 : 1; O.last = fgDay(); O.n++;
+}
+{ const a = fgOrder('2026-11-21'), b = fgOrder('2026-11-21'), c = fgOrder('2026-11-22');
+  console.assert(JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a) !== JSON.stringify(c) && FG_KINDS.includes(a.kind) && a.metal >= 1 && a.metal <= 3 && fgOrderTxt(a).every(s => s && !s.includes('undefined')), 'fgOrder'); }
+function fgArmoryDraw() {  // l'armurerie : une colonne par arme, une ligne par métal de lame ; les armes pas encore forgées en ombre, la meilleure note dans le coin
+  const c = $('fgArm'); if (!c) return; const b = c.getContext('2d'), col = games.forgeCollection || {};
+  px(b, '#140a08', 0, 0, c.width, c.height);
+  FG_KINDS.forEach((k, i) => { pxFont(b, k, 27 + i * 53, 9, '#ffd8b0', 5, 'center'); const [s0, s1] = fgSpan(k), s = .45;
+    FG_METALS.forEach((m, j) => { const e = col[k + '|' + m[0]], y = 24 + j * 21, x = 27 + i * 53 - (s0 + s1) / 2 * s; px(b, j % 2 ? '#1e120c' : '#24160e', i * 53 + 1, y - 10, 52, 20);
+      const C = e ? m.slice(2) : ['#6a5246', '#4e3a30', '#3a2a22']; fgWeapon(x, y, s, k, {blade: C, guard: C, pommel: C}, 1, b);
+      if (e?.en) { const ec = (FG_ENCH.find(q => q[0] === e.en) || FG_ENCH[0])[2]; px(b, ec, i * 53 + 3, y - 8, 2, 2); px(b, ec, i * 53 + 6, y - 6, 1, 1); }
+      if (e?.g) pxFont(b, e.g, i * 53 + 50, y + 8, e.g === 'S' ? '#ffd84a' : '#a8a0c8', 5, 'right'); }); });
+  const O = games.forgeOrders, n = Object.keys(col).length;
+  $('fgArmN').textContent = n + ' / ' + FG_KINDS.length * FG_METALS.length + ' armes · lignes : ' + FG_METALS.map(m => m[0]).join(', ') + (O?.n ? ' · commandes remplies : ' + O.n + (O.streak > 1 ? ' (' + O.streak + ' jours de suite)' : '') : '');
+}
+/* ---------- 1.1.0 : l'enchantement, un 4e acte au choix : des runes à graver à gauche puis à droite ; la précision donne la lueur de l'arme ---------- */
+const FG_ENCH = [['aucun', 0, '#a8a0c8'], ['braises', .6, '#ff6a3a'], ['givre', .75, '#8ad8ff'], ['foudre', .87, '#ffe84a'], ['étoiles', .94, '#d8a0ff']];
+const fgEnchOn = () => $('fgEnch')?.value === '1';
+const fgEnchOf = acc => FG_ENCH.filter(e => acc >= e[1] - 1e-9).at(-1);
+function fgRune(x, y, s, k) {  // une rune qui arrive : une pierre sombre, son signe lumineux, la flèche de son côté
+  px(g, '#1a0a2a', x - 6, y - 6, 13, 13); px(g, '#4a2a6a', x - 5, y - 5, 11, 11);
+  const G = [[[0, -3], [0, 3], [-2, -1], [2, 1]], [[-3, 0], [3, 0], [0, -3], [0, 3]], [[-2, -3], [2, 3], [2, -3], [-2, 3]], [[0, -3], [-3, 2], [3, 2], [0, 0]]][k % 4];
+  for (const [a, b] of G) px(g, '#e8c8ff', x + a, y + b, 1, 1); px(g, '#ffffff', x, y, 1, 1);
+  for (let j = 0; j < 4; j++) px(g, '#c8a0ff', x - s * (9 + j), y - 3 + j, 1, 7 - 2 * j);
+}
+function fgAura(cx, cy, w, h, col) {  // la lueur de l'arme enchantée : des étincelles qui tournent autour, plus vives par moments
+  for (let i = 0; i < 18; i++) { const a = rh.tick / 30 + i * 2.1, x = cx + Math.cos(a) * w * (.6 + .4 * Math.sin(i)), y = cy + Math.sin(a * 1.3) * h; g.globalAlpha = .45 + .45 * Math.sin(rh.tick / 8 + i); px(g, col, x, y, 1 + (i % 3 === 0), 1 + (i % 3 === 0)); }
+  g.globalAlpha = 1;
+}
+{ console.assert(fgEnchOf(.5)[0] === 'aucun' && fgEnchOf(.8)[0] === 'givre' && fgEnchOf(1)[0] === 'étoiles', 'fgEnchOf'); }
 function fgScore(a, v) { rh.acts[a].sum += v; rh.acts[a].n++; }
 function fgFx(n, w, text) {
   rh.judge = {text: w ? w[1] : text || 'RATÉ', col: w ? w[3] : '#ff6a5a', t: 24}; fgScore(n.act, w ? w[2] / RH.WIN[0][2] : 0);
@@ -1130,13 +1181,15 @@ function fgStep(now) {
   }
   if (rh.held && now >= rh.held.t + rh.held.len) { rh.held.tail = true; rh.score += 150; fgScore(rh.held.act, 1); rh.held = null; rh.judge = {text: 'TENU', col: '#ffd84a', t: 20}; }
   // la fin d'un acte : sa pièce refroidit dans son métal ; l'acte suivant s'annonce
-  for (let a = 0; a < 3; a++) {
-    if (rh.parts[a] || !rh.notes.some(n => n.act === a) || rh.notes.some(n => n.act === a && (!n.judged || n === rh.held))) continue;
-    const s = rh.acts[a]; rh.parts[a] = fgMetal(s.n ? s.sum / s.n : 0);
+  for (let a = 0; a < 4; a++) {
+    if ((a < 3 ? rh.parts[a] : rh.ench) || !rh.notes.some(n => n.act === a) || rh.notes.some(n => n.act === a && (!n.judged || n === rh.held))) continue;
+    const s = rh.acts[a];
+    if (a === 3) { rh.ench = fgEnchOf(s.n ? s.sum / s.n : 0); rh.banner = {lines: [['ENCHANTEMENT : ' + rh.ench[0].toUpperCase(), rh.ench[2]], [Math.round((s.n ? s.sum / s.n : 0) * 100) + ' % de précision', '#e8e0ff']], t: 70}; continue; }
+    rh.parts[a] = fgMetal(s.n ? s.sum / s.n : 0);
     rh.banner = {lines: [[['LAME', 'GARDE', 'POMMEAU'][a] + ' : ' + rh.parts[a][0].toUpperCase(), rh.parts[a][3]], [Math.round((s.n ? s.sum / s.n : 0) * 100) + ' % de précision', '#e8e0ff']], t: 70};
     for (let i = 0; i < 20; i++) { const b = Math.random() * 6.28, v = .5 + Math.random() * 1.5; rh.sparks.push({x: FG.AX, y: FG.AY - 6, vx: Math.cos(b) * v, vy: Math.sin(b) * v - 1, life: 26, col: rh.parts[a][2]}); }
   }
-  const act = rh.notes.find(n => !n.judged)?.act ?? 2;
+  const act = rh.notes.find(n => !n.judged)?.act ?? rh.notes.at(-1)?.act ?? 2;
   if (act !== rh.act) { rh.act = act; if (!rh.banner || rh.banner.t < 30) rh.banner = {lines: [[FG_ACTS[act][0], '#ffd84a'], [FG_ACTS[act][1], '#ffd8b0']], t: 110}; }
   if (rh.banner && --rh.banner.t <= 0) rh.banner = null;
   for (const s of rh.sparks) { s.x += s.vx; s.y += s.vy; s.vy += .12; s.life--; } rh.sparks = rh.sparks.filter(s => s.life > 0);
@@ -1151,7 +1204,7 @@ function fgHit(by, side, now = rhNow()) {  // by : la touche (ou le bouton de so
   let near = null;
   for (const n of rh.notes) { if (n.judged) continue; if (n.t - now > .25) break; if (Math.abs(n.t - now) <= RH.WIN.at(-1)[0] && (!near || Math.abs(n.t - now) < Math.abs(near.t - now))) near = n; }
   if (!near) return;
-  if (near.act === 1 && side !== near.side) { rhMissed(near); fgFx(near, null, 'MAUVAIS CÔTÉ'); return; }
+  if ((near.act === 1 || near.act === 3) && side !== near.side) { rhMissed(near); fgFx(near, null, 'MAUVAIS CÔTÉ'); return; }
   if (near.both) {  // une gemme double : les deux mains (un côté puis l'autre) en moins de 120 ms ; jugée sur la première
     if (!near.first) { near.first = {side, at: now, dt: now - near.t}; return; }
     if (side && near.first.side && side === near.first.side) return;
@@ -1167,14 +1220,16 @@ function fgRelease(by, now = rhNow()) {  // lâcher la touche : une note tenue l
 }
 function fgSave() {  // l'arme rejoint l'armurerie (les 60 dernières) ; la forme et le métal de la lame : une case de la collection
   rh.saved = true; rh.parts = rh.parts.map(p => p || FG_METALS[0]);
+  if (!rh.ench && rh.acts[3].n) rh.ench = fgEnchOf(rh.acts[3].sum / rh.acts[3].n);  // la fin forcée (le test) passe avant la fin de l'acte IV
   const list = gstore('forgeArmory', []), col = gstore('forgeCollection', {}), key = rh.kind + '|' + rh.parts[0][0];
-  list.unshift({name: rh.info.name.slice(0, 40), kind: rh.kind, metals: rh.parts.map(p => p[0]), grade: rh.grade, at: Date.now()}); list.length = Math.min(list.length, 60);
-  rh.isNew = !col[key]; col[key] = {song: rh.info.name.slice(0, 40), at: col[key]?.at || Date.now()}; saveGames();
+  list.unshift({name: rh.info.name.slice(0, 40), kind: rh.kind, metals: rh.parts.map(p => p[0]), grade: rh.grade, at: Date.now(), ...(rh.ench && rh.ench[0] !== 'aucun' ? {ench: rh.ench[0]} : {})}); list.length = Math.min(list.length, 60);
+  rh.isNew = !col[key]; col[key] = {song: rh.info.name.slice(0, 40), at: col[key]?.at || Date.now(), g: !col[key]?.g || 'SABCD'.indexOf(rh.grade) < 'SABCD'.indexOf(col[key].g) ? rh.grade : col[key].g, ...(Math.max(FG_ENCH.indexOf(rh.ench), FG_ENCH.findIndex(e => e[0] === col[key]?.en)) > 0 ? {en: FG_ENCH[Math.max(FG_ENCH.indexOf(rh.ench), FG_ENCH.findIndex(e => e[0] === col[key]?.en))][0]} : {})};
+  fgOrderEnd(); saveGames(); fgArmoryDraw();
 }
 // l'arme, couchée, la pointe à droite ; (x, y) : le centre de la garde. P : {blade, guard, pommel} (couleurs [clair, moyen, sombre] ou rien), f : la lame faite (0 à 1)
 const FG_SHAPE = {Dague: {L: 34, w: 6, G: 10, gh: 12}, Épée: {L: 58, w: 6, G: 14, gh: 18}, Sabre: {L: 54, w: 7, G: 13, gh: 15}, Hache: {L: 56, G: 12, gh: 8, haft: 1}, Lance: {L: 64, G: 12, gh: 8, haft: 1}, Marteau: {L: 50, G: 12, gh: 8, haft: 1}};
-function fgWeapon(x, y, s, kind, P, f = 1) {
-  const S = FG_SHAPE[kind], R = (dx, dy, w, h, c) => px(g, c, Math.round(x + dx * s), Math.round(y + dy * s), Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s)));
+function fgWeapon(x, y, s, kind, P, f = 1, G = g) {
+  const S = FG_SHAPE[kind], R = (dx, dy, w, h, c) => px(G, c, Math.round(x + dx * s), Math.round(y + dy * s), Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s)));
   const WOOD = ['#c8945a', '#8a5a30', '#4a2a14'];
   if (P.pommel) {  // la poignée et le pommeau
     for (let i = 0; i < S.G; i++) { R(-3 - i, -2, 1, 4, i % 3 ? '#5a3a1a' : '#3a2410'); R(-3 - i, -2, 1, 1, '#7a5230'); }
@@ -1254,6 +1309,7 @@ function fgDraw() {
     }
     if (n.len) { const x0 = FG.AX + Math.max(0, d), x1 = FG.AX + (n.t + n.len - now) * FG.V; if (x1 > x0) { px(g, '#6a1a0a', x0, FG.AY - 3, x1 - x0, 8); px(g, n === rh.held ? '#ffd84a' : '#ff5a2a', x0, FG.AY - 2, x1 - x0, 5); px(g, '#ffb84a', x0, FG.AY - 2, x1 - x0, 1); } }
     if (n.judged) continue;
+    if (n.act === 3) { fgRune(FG.AX + n.side * d, FG.AY - 2, n.side, i); continue; }
     const s = n.act === 1 ? n.side : 1, x = FG.AX + s * d, big = n.acc > .85, r = big ? 6 : 4;
     px(g, '#3a0a04', x - r - 1, FG.AY - r, 2 * r + 2, 2 * r + 1); px(g, big ? '#ffd84a' : '#ff8a3a', x - r, FG.AY - r + 1, 2 * r, 2 * r - 1); px(g, '#fff4b0', x - r + 1, FG.AY - r + 2, r, 2);
     if (n.act === 1) { const c = s < 0 ? '#8ad8ff' : '#ffb07a'; for (let k = 0; k < 4; k++) px(g, c, x - s * (r + 3 + k), FG.AY - 3 + k, 1, 7 - 2 * k); }  // la flèche du côté (froide à gauche, chaude à droite)
@@ -1268,6 +1324,7 @@ function fgDraw() {
     const S = FG_SHAPE[rh.kind], a0 = rh.notes.filter(n => n.act === 0), f = rh.parts[0] ? 1 : a0.length ? a0.filter(n => n.judged && !n.missed).length / a0.length : 1;
     const want = rh.act === 0 ? FG.AX - (3 + S.L * (.3 + .7 * f) * .6) : rh.act === 1 ? FG.AX : FG.AX + 3 + S.G + 3; rh.wx = rh.wx == null ? want : rh.wx + (want - rh.wx) * .08;
     fgWeapon(rh.wx, FG.AY - 4, 1, rh.kind, P, f);
+    if (rh.act === 3 && rh.acts[3].n) fgAura(rh.wx + 20, FG.AY - 4, 40, 8, fgEnchOf(rh.acts[3].sum / rh.acts[3].n)[2]);
   }
   // le marteau : il se lève, puis retombe sur la pièce à chaque coup
   const swing = rh.tick - rh.tap < 4 ? 0 : Math.min(1, (rh.tick - rh.tap - 4) / 8), ang = -Math.PI / 5 + swing * 1.05, hx = FG.AX + 44, hy = FG.AY - 34;
@@ -1279,18 +1336,21 @@ function fgDraw() {
     if (!rh.saved) fgSave();
     const pm = rh.parts.map(p => p || FG_METALS[0]), [s0, s1] = fgSpan(rh.kind); g.fillStyle = 'rgba(11,3,28,.6)'; g.fillRect(0, 10, W, 76);
     fgWeapon(W / 2 - (s0 + s1), 34, 2, rh.kind, {blade: pm[0].slice(2), guard: pm[1].slice(2), pommel: pm[2].slice(2)});
-    pxFont(g, fgName(rh.kind, pm[0]).toUpperCase(), W / 2, 62, pm[0][3], 8, 'center');
+    if (rh.ench && rh.ench[0] !== 'aucun') fgAura(W / 2, 34, 70, 12, rh.ench[2]);
+    pxFont(g, fgName(rh.kind, pm[0]).toUpperCase() + (rh.ench && rh.ench[0] !== 'aucun' ? ' · ' + rh.ench[0].toUpperCase() : ''), W / 2, 62, rh.ench && rh.ench[0] !== 'aucun' ? rh.ench[2] : pm[0][3], 8, 'center');
     pxFont(g, 'garde ' + (/^[aeiouéè]/i.test(pm[1][0]) ? 'd\'' : 'de ') + pm[1][0] + ' · pommeau ' + (/^[aeiouéè]/i.test(pm[2][0]) ? 'd\'' : 'de ') + pm[2][0], W / 2, 72, '#e8e0ff', 6, 'center');
     const nb = Object.keys(games.forgeCollection || {}).length; pxFont(g, (rh.isNew ? 'NOUVELLE ARME ! ' : 'Déjà dans ta collection · ') + nb + ' / ' + FG_KINDS.length * FG_METALS.length, W / 2, 82, rh.isNew ? '#ffd84a' : '#a8a0c8', 6, 'center');
   }
   if (rh.mode !== 'ready' && rh.mode !== 'load') {
     rhProgress(now, '#ff8a3a'); pxFont(g, String(rh.score).padStart(7, '0'), 4, 14, '#ffffff', 7);
     if (rh.combo > 4) pxFont(g, rh.combo + ' combo', W - 4, 14, '#ff8a3a', 7, 'right');
-    if (!done) { const s = rh.acts[rh.act]; pxFont(g, ['LAME', 'GARDE', 'POMMEAU'][rh.act] + ' · ' + (s.n ? fgMetal(s.sum / s.n)[0] : '…'), W - 4, 26, '#ffd8b0', 6, 'right'); }
+    if (!done) { const s = rh.acts[rh.act]; pxFont(g, ['LAME', 'GARDE', 'POMMEAU', 'RUNES'][rh.act] + ' · ' + (s.n ? (rh.act === 3 ? fgEnchOf : fgMetal)(s.sum / s.n)[0] : '…'), W - 4, 26, '#ffd8b0', 6, 'right'); }
     pxFont(g, rhStarTxt(rh.stars), W / 2, H - 6, '#8a7a6a', 6, 'center');
   }
   if (rh.mode === 'play' && now < 0) pxFont(g, String(Math.ceil(-now)), W / 2, 40, '#ff8a3a', 16, 'center');
   rhScreens(done ? 112 : 60);
+  if (rh.order && rh.mode === 'ready') { const [a, b] = fgOrderTxt(rh.order); g.fillStyle = 'rgba(11,3,28,.85)'; g.fillRect(W / 2 - 120, 182, 240, 34); pxFont(g, 'COMMANDE DU JOUR : ' + a.toUpperCase(), W / 2, 193, '#ffd84a', 6, 'center'); pxFont(g, b, W / 2, 206, '#ffd8b0', 6, 'center'); }
+  if (done && rh.orderOk != null) { g.fillStyle = 'rgba(11,3,28,.85)'; g.fillRect(W / 2 - 110, 88, 220, 12); pxFont(g, rh.orderOk ? 'COMMANDE REMPLIE POUR ' + rh.order.client.toUpperCase() + ' !' : 'MANQUÉE : ' + fgOrderTxt(rh.order)[1], W / 2, 97, rh.orderOk ? '#7ee07a' : '#ff8a7a', 6, 'center'); }
   if (rh.tick % 15 === 0) cv.setAttribute('aria-label', 'Forge, ' + (rh.info?.name || '') + ' : ' + ({ready: 'prêt', load: 'chargement', play: 'en jeu', pause: 'pause', over: 'fini'}[rh.mode] || rh.mode) + ', score ' + rh.score + ', combo ' + rh.combo + ', ' +
     Object.entries(rh.counts).map(([k, v]) => k.toLowerCase() + ' ' + v).join(', ') + ', acte ' + (rh.act + 1) + '.');
 }
@@ -1333,7 +1393,9 @@ document.addEventListener('keydown', e => {
   if (k === ' ' || k === 'Enter') { e.preventDefault(); if (!e.repeat) rhPress(); }
 });
 document.addEventListener('keyup', e => { if (!rh) return; if (e.key === ' ' && keyOk(e)) e.preventDefault(); const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (rh.mode === 'play' && FG_KEYS(k)) fgRelease(k); });
-cv.__rh = {st: () => rh, finish: hist => { rh.hist = hist; rh.mode = 'play'; rhCheckEnd(1e9); }};  // pour le test « local »
+$('fgEnch').addEventListener('change', () => { if (rh?.mode === 'ready' || rh?.mode === 'over') rhSelect(rh.song, rh.diff); });
+$('fgOrd').addEventListener('change', () => { if (rh?.mode === 'ready' || rh?.mode === 'over') rhSelect(rh.song, rh.diff); });
+cv.__rh = {arm: () => $('fgArmN').textContent, order: () => rh.order && rh.order.kind === rh.kind, st: () => rh, finish: hist => { rh.hist = hist; rh.mode = 'play'; rhCheckEnd(1e9); }};  // pour le test « local »
 {  // la manette : à gauche la croix gauche, X, A et la gâchette gauche ; à droite la croix droite, B, Y et la gâchette droite ; Start lance, Select met en pause
   const KEY = {14: 'ArrowLeft', 2: 'ArrowLeft', 0: 'ArrowLeft', 4: 'ArrowLeft', 13: 'ArrowLeft', 15: 'ArrowRight', 1: 'ArrowRight', 3: 'ArrowRight', 5: 'ArrowRight', 12: 'ArrowRight', 9: ' ', 8: 'p'}, held = new Set();
   const send = (k, type) => document.dispatchEvent(new KeyboardEvent(type, {key: k, bubbles: true}));
