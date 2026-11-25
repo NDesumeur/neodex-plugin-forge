@@ -1,9 +1,9 @@
 {
   "pluginId": "neodex.forge",
   "repo": "NDesumeur/neodex-plugin-forge",
-  "version": "1.1.0",
-  "sha256": "fce0b7351f161fe27f208168673f7a1b525e8e647a19b7f3af6e5467d42a7437",
-  "approvedAt": "2026-11-22T19:05:24.545Z",
+  "version": "1.2.0",
+  "sha256": "756bc11b44b5b91868a6409b6e2b78d5305bddf70423d98492516c4f942b1397",
+  "approvedAt": "2026-11-25T17:16:42.212Z",
   "neobase": ">=4.1.0",
-  "signature": "zvFX/3XjhCvNLIQdtE6ZG2db6G9JtZdrOOkOJuzWl4f36tZe24xhlwPMr5ecS7ghvVCtsZKSaQiHKOnQMKnzCA=="
+  "signature": "SPGm74ISPubJpsiH7m2qC1kMezXtDdwbGAWac2yZPpVOsam1W1Ui9ethx87zVB80P4CW5aiP7aCpUrSHlex0AA=="
 }
