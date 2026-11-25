@@ -326,6 +326,9 @@ export default async function (ctx) {
   const saveGames = () => { clearTimeout(gamesTimer); gamesTimer = setTimeout(() => { gamesTimer = null; folder.write('games', games).catch(() => {}); }, 500); };
   const best = (k, v) => { const b = games.best[k]; if (b == null || v > b) { games.best[k] = v; saveGames(); return true; } return false; };
   const gstore = (k, init) => (games[k] ??= init);
+  // les trophées de NeoDex (3.4.8 et plus) : succès et records déclarés dans plugin.json ; sur un NeoDex plus ancien, rien ne se passe
+  const trophy = id => { ctx.games?.unlock(id).catch(() => {}); };
+  const trophyRecord = (id, v) => { if (v != null && Number.isFinite(+v)) ctx.games?.record(id, +v).catch(() => {}); };
 function gameLoop(st, appKey, update, draw) {
   cancelAnimationFrame(st.raf);
   const STEP = 1000 / 60; let acc = 0, last = performance.now();
@@ -1354,7 +1357,8 @@ function fgDraw() {
   if (rh.tick % 15 === 0) cv.setAttribute('aria-label', 'Forge, ' + (rh.info?.name || '') + ' : ' + ({ready: 'prêt', load: 'chargement', play: 'en jeu', pause: 'pause', over: 'fini'}[rh.mode] || rh.mode) + ', score ' + rh.score + ', combo ' + rh.combo + ', ' +
     Object.entries(rh.counts).map(([k, v]) => k.toLowerCase() + ' ' + v).join(', ') + ', acte ' + (rh.act + 1) + '.');
 }
-function rhInfo() { const res = games.rhythm || {}, all = Object.values(res), arm = games.forgeArmory || [], col = Object.keys(games.forgeCollection || {});
+function rhInfo() {
+  setTimeout(rhTrophies); const res = games.rhythm || {}, all = Object.values(res), arm = games.forgeArmory || [], col = Object.keys(games.forgeCollection || {});
   showStats([['Morceaux joués', all.length], ['Armes forgées', arm.length], ['Collection', col.length + ' / ' + FG_KINDS.length * FG_METALS.length], ['Lames de mithril', col.filter(k => k.endsWith('|mithril')).length], ['Lames d\'étoile', col.filter(k => k.endsWith('|étoile')).length], ['Meilleur combo', Math.max(0, ...all.map(r => r.combo || 0))]]); }
 const FG_KEYS = k => k.length === 1 || k === 'Enter' || k.startsWith('Arrow');
 // les touches choisies dans les options : deux par côté. Les flèches et la manette marchent toujours, les autres touches gardent leur côté habituel
@@ -1428,6 +1432,15 @@ cv.__rh = {arm: () => $('fgArmN').textContent, order: () => rh.order && rh.order
   if (!ok) bad.push('jugement ' + JSON.stringify(rh.counts) + ' ' + rh.parts.map(p => p && p[0]));
   rh = keep;
   console.assert(!bad.length, 'forge', bad);
+}
+// les trophées, tirés des statistiques et des records gardés (aussi à l'ouverture : ce qui a été fait avant compte)
+function rhTrophies() {
+  const all = Object.values(games.rhythm || {}), s = all.filter(r => r.grade === 'S').length, a = all.some(r => 'SA'.includes(r.grade)), combo = all.reduce((m, r) => Math.max(m, r.combo || 0), 0), acc = all.reduce((m, r) => Math.max(m, r.acc || 0), 0), imp = rhImports().length;
+  const sig = [all.length, s, a, combo, acc, imp].join(); if (sig === rhTrophies.sig) return; rhTrophies.sig = sig;
+  trophyRecord('morceaux', all.length || null); trophyRecord('notes-s', s || null); trophyRecord('combo', combo || null); trophyRecord('precision', all.length ? acc : null);
+  if (all.length >= 1) trophy('premier'); if (all.length >= 10) trophy('dix'); if (all.length >= 30) trophy('trente');
+  if (a) trophy('note-a'); if (s >= 1) trophy('note-s'); if (s >= 10) trophy('s10'); if (combo >= 100) trophy('combo100'); if (combo >= 300) trophy('combo300');
+  if (acc >= 100) trophy('parfait'); if (imp) trophy('import');
 }
 ctx.onOpen(() => rhOpen());
 }
